@@ -8,6 +8,7 @@ extern char *lcd_buff;
 extern volatile _Bool run_function;
 extern unsigned int time[3];
 extern unsigned int measurement;
+extern uint8_t first_time[2];
 
 extern const char txt1[];
 extern const char txt2[];
@@ -28,6 +29,7 @@ void func_menu1311(char c);
 void func_menu1312(char c);
 void func_menu21(char c);
 void func_menu22(char c);
+void func_menu23(char c);
 void func_menu31(char c);
 
 #endif

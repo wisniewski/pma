@@ -34,5 +34,6 @@ void lcd_initiation (char data, char rs);
 void lcd_write_data(char data);
 void lcd_write_command(char data);
 void lcd_show(void);
+void lcd_clear(void);
 
 #endif

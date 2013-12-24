@@ -22,7 +22,8 @@ uint8_t volatile lcd_buff_full; //write from buffer to lcd
 char *lcd_buff; //pointer to buffer
 volatile _Bool run_function=false, lcd_start=false; //can we run function(2)?
 unsigned int time[3]={0,0,0}; //rtc
-unsigned int measurement = 0;
+uint8_t first_time[2]={0};
+unsigned int measurement = 0; //adc
 
 //struktura menu // <-------- --------- ------- M E N U
 struct menu
@@ -37,23 +38,24 @@ struct menu
 	char arrow;
 };
 
-struct menu M1, M2, M3, M11, M12, M13, M131, M132, M21, M22, M31;
+struct menu M1, M2, M3, M11, M12, M13, M131, M132, M21, M22, M23, M31;
 struct menu *current_menu;
 
 //menu 1 - real time clock, stopwatch, count down
-const char txt1[] = "\001\x82\004\377Clock/Timers\001\xc4\004\377Counters";
-const char txt2[] = "\001\x81\004\377Real Time Clock";
-const char txt3[] = "\001\x83\004\377Stop Watch";
-const char txt4[] = "\001\x83\004\377Count Down";
-const char txt5[] = "\001\x84\004\377Egg Timer";
-const char txt6[] = "\001\x84\004\377Metronome";
+const char txt1[] = "Clock/Timers";
+const char txt2[] = "Real Time Clock";
+const char txt3[] = "Stop Watch";
+const char txt4[] = "Count Down";
+const char txt5[] = "Egg Timer";
+const char txt6[] = "Metronome";
 //menu 2 - voltmeter, thermometer
-const char txt7[] = "\001\x83\004\377Voltmeter\001\xc2\004\377Thermometer";
-const char txt8[] = "\001\x83\004\377Voltmeter";
-const char txt9[] = "\001\x82\004\377Thermometer";
+const char txt7[] = "Voltmeter\001\xc0\004\377Thermometer";
+const char txt8[] = "Voltmeter";
+const char txt9[] = "Thermometer";
 //menu 3 - motor
-const char txt10[] = "\001\x85\004\377Motor\001\xc4\004\377Control";
-const char txt11[] = "PodMenu 3-1";
+const char txt10[] = "Motor Control";
+const char txt11[] = "\001\x84\004\377Dziekuje\001\xc2\004\377i nawzajem :)";
+const char txt12[] = "Distance";
 
 //definicja odwoluje sie do innych elementow {lewo, prawo, gora nic, dol, "string"}
 struct menu M1 = {&M3, &M2, NULL, &M11, txt1, NULL, 0, 126};
@@ -65,7 +67,8 @@ struct menu M132 = {&M131, &M131, &M13, NULL, txt6, &func_menu1312, 1000, 127};
 
 struct menu M2 = {&M1, &M3, NULL, &M21, txt7, NULL, 0, 126};
 struct menu M21 = {&M22, &M22, &M2, NULL, txt8, &func_menu21, 1000, 127};
-struct menu M22 = {&M21, &M21, &M2, NULL, txt9, &func_menu22, 1000, 127};
+struct menu M22 = {&M21, &M23, &M2, NULL, txt9, &func_menu22, 1000, 127};
+struct menu M23 = {&M22, &M21, &M2, NULL, txt12, &func_menu23, 1000, 127};	
 
 struct menu M3 = {&M2, &M1, NULL, &M31, txt10, NULL, 0, 126};
 struct menu M31 = {NULL, NULL, &M3, NULL, txt11, &func_menu31, 0, 127};
@@ -192,9 +195,10 @@ int main (void) // <-------- -------- -------- -------- ----- M A I N
 					local = 1;
 					break;
 				}
-				//jezeli nic nie naciskalismy to niech sie wyswietla obecne menu
-				sprintf(lcd_buff,"\001\x01\004\377%s\001\xcf\004\377%c",current_menu->str, current_menu->arrow);
-				lcd_buff_full = 1;
+				if((current_menu -> function) == NULL)
+				{//jezeli nic nie naciskalismy to niech sie wyswietla obecne menu
+				sprintf(lcd_buff,"\001\x01\004\377%s",current_menu->str);
+				lcd_buff_full = 1;}
 				keys = 0;
 			}
 			if(run_function)

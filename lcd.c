@@ -59,3 +59,9 @@ void lcd_show(void)
 	else if(lcd_cnt > 0)
 	lcd_cnt--;
 }
+
+void lcd_clear(void)
+{
+	sprintf(lcd_buff,"\001\x01\004\377");
+	lcd_buff_full=1;
+}

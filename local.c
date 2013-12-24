@@ -4,6 +4,7 @@
 #include <avr/io.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include "lcd.h"
 
 void sound(uint16_t duration[])
 {
@@ -14,6 +15,8 @@ void sound(uint16_t duration[])
 		PORTD ^= (1 << PD3);
 	}
 }
+
+
 
 
 void func_menu11(char c) //Zegar czasu rzeczywistego - RTC
@@ -212,11 +215,11 @@ void func_menu21(char c) //voltmeter
 {
 	switch(c)
 	{
+		static uint8_t adc_toggle_volt=0;
 		case 1:
 		{
 			if(keys!=0)
 			{
-				static uint8_t adc_toggle=0;
 				switch(keys)
 				{
 					case 1: //escape
@@ -237,8 +240,8 @@ void func_menu21(char c) //voltmeter
 				}
 				if(local)
 				{
-					adc_toggle = (adc_toggle + 1) % 2;
-					if(adc_toggle) //turn on ADC, prescaler 64 (125kHz), free runing mode, enable interrupts, start conv
+					adc_toggle_volt = (adc_toggle_volt + 1) % 2;
+					if(adc_toggle_volt) //turn on ADC, prescaler 64 (125kHz), free runing mode, enable interrupts, start conv
 					{
 						//ADC - ref. voltage from Vcc, PA7 to voltometer (111), PA6 to thermometer (110)
 						ADMUX |= (1<<REFS0) | (1<<MUX0) | (1<<MUX1) | (1<<MUX2);
@@ -249,8 +252,7 @@ void func_menu21(char c) //voltmeter
 						ADMUX = 0x00;
 						ADCSRA = 0x00;
 					}
-					sprintf(lcd_buff,"\001\x01\004\377");
-					lcd_buff_full=1;
+					lcd_clear();
 					local = 0; //go back
 				}
 			}
@@ -261,14 +263,35 @@ void func_menu21(char c) //voltmeter
 		
 		case 2:
 		{
+			first_time[1]=0; //thermo
+			if(first_time[0]==0)
+			{
+				lcd_clear();
+				adc_toggle_volt=0;
+				ADMUX = 0x00;
+				ADCSRA = 0x00;
+				first_time[0]++;
+			}
 			float temp;
 			int integer, fractional;
-			temp = measurement/204.6f;
-			integer = (int) temp; //konwersja z float na uint8_t
-			temp = (temp - integer) * 1000.0f;
-			fractional = (int) temp;
-			sprintf(lcd_buff,"%s\001\xc4%d.%.3d V\001\xcf%c",txt8,integer, fractional, 127);
-			lcd_buff_full=1;
+			const char on[]="on", off[]="off";
+			if(adc_toggle_volt==0)
+			{
+				integer = 0;
+				fractional = 0;
+				sprintf(lcd_buff,"\001\x80\004\377%s\001\xc0\004\377%.2d.%.3d V (%s)",txt8,integer, fractional, off);
+				lcd_buff_full=1;
+			}
+			else
+			{
+				temp = measurement/204.6f;
+				integer = (int) temp; //konwersja z float na uint8_t
+				temp = (temp - integer) * 1000.0f;
+				fractional = (int) temp;
+				sprintf(lcd_buff,"\001\x80\004\377%s\001\xc0\004\377%.2d.%.3d V (%s) ",txt8,integer, fractional, on);
+				lcd_buff_full=1;
+			}
+			
 		}
 		break;
 	}
@@ -277,11 +300,12 @@ void func_menu22(char c) //thermometer
 {
 	switch(c)
 	{
+		static uint8_t adc_toggle_thermo=0;
 		case 1:
 		{
 			if(keys!=0)
 			{
-				static uint8_t adc_toggle=0;
+				
 				switch(keys)
 				{
 					case 1: //escape
@@ -302,21 +326,19 @@ void func_menu22(char c) //thermometer
 				}
 				if(local)
 				{
-					adc_toggle = (adc_toggle + 1) % 2;
-					if(adc_toggle) //turn on ADC, prescaler 64 (125kHz), free runing mode, enable interrupts, start conv
+					adc_toggle_thermo = (adc_toggle_thermo + 1) % 2;
+					if(adc_toggle_thermo) //turn on ADC, prescaler 64 (125kHz), free runing mode, enable interrupts, start conv
 					{
 						//ADC - ref. voltage from Vcc, PA7 to voltometer (111), PA6 to thermometer (110)
 						ADMUX |= (1<<REFS0) | (1<<MUX1) | (1<<MUX2);
 						ADCSRA |= (1<<ADEN) | (1<<ADATE) | (1<<ADIE) | (1<<ADSC) | (1<<ADPS2) | (1<<ADPS1);
-						
 					}
 					else
 					{
 						ADMUX = 0x00;
 						ADCSRA = 0x00;
 					}
-					sprintf(lcd_buff,"\001\x01\004\377");
-					lcd_buff_full=1;
+					lcd_clear();
 					local = 0; //go back
 				}
 			}
@@ -327,6 +349,15 @@ void func_menu22(char c) //thermometer
 		
 		case 2:
 		{
+			first_time[0]=0; //voltmeter
+			if(first_time[1]==0)
+			{
+				lcd_clear();
+				adc_toggle_thermo=0;
+				ADMUX = 0x00;
+				ADCSRA = 0x00;
+				first_time[1]++;
+			}
 			/* SciDavis said:
 			Linear Regression fit of dataset: Table1_2, using function: A*x+B
 			Y standard errors: Unknown
@@ -335,16 +366,35 @@ void func_menu22(char c) //thermometer
 			A (slope) = 0,25 +/- 6,52646234769871e-18 */
 			float temp;
 			int integer, fractional;
-			temp = (0.25f*measurement)-20.5f;
-			integer = (int) temp; //conversion from float to uint8_t
-			temp = (temp - integer) * 100.0f;
-			fractional = (int) temp;
-			sprintf(lcd_buff,"\001\xc4\004\377%d.%.2d C\001\xcf%c",integer, fractional, 127);
-			lcd_buff_full=1;
+			const char on[]="on", off[]="off";
+			if(adc_toggle_thermo==0)
+			{
+				integer=0;
+				fractional=0;
+				sprintf(lcd_buff,"\001\x80\004\377%s\001\xc0\004\377%.2d.%.3d C (%s)",txt9, integer, fractional, off);
+				lcd_buff_full=1;
+			}
+			else
+			{
+				
+				temp = (0.25f*measurement)-20.5f;
+				integer = (int) temp; //conversion from float to uint8_t
+				temp = (temp - integer) * 100.0f;
+				fractional = (int) temp;
+				sprintf(lcd_buff,"\001\x80\004\377%s\001\xc0\004\377%.2d.%.3d C (%s) ",txt9, integer, fractional, on);
+				lcd_buff_full=1;
+			}
+			
 		}
 		break;
 	}
 }
+
+void func_menu23(char c)
+{
+	local = 0;
+}
+
 void func_menu31(char c)
 {
 	local = 0;
