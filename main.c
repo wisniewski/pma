@@ -22,8 +22,9 @@ uint8_t volatile lcd_buff_full; //write from buffer to lcd
 char *lcd_buff; //pointer to buffer
 volatile _Bool run_function=false, lcd_start=false; //can we run function(2)?
 unsigned int time[3]={0,0,0}; //rtc
-uint8_t first_time[2]={0};
+uint8_t first_time[3]={0};
 unsigned int measurement = 0; //adc
+unsigned int distance = 0; //HC-SR04 distance sensor
 
 //struktura menu // <-------- --------- ------- M E N U
 struct menu
@@ -66,7 +67,7 @@ struct menu M131 = {&M132, &M132, &M13, NULL, txt5, &func_menu1311, 0, 127};
 struct menu M132 = {&M131, &M131, &M13, NULL, txt6, &func_menu1312, 1000, 127};
 
 struct menu M2 = {&M1, &M3, NULL, &M21, txt7, NULL, 0, 126};
-struct menu M21 = {&M22, &M22, &M2, NULL, txt8, &func_menu21, 1000, 127};
+struct menu M21 = {&M23, &M22, &M2, NULL, txt8, &func_menu21, 1000, 127};
 struct menu M22 = {&M21, &M23, &M2, NULL, txt9, &func_menu22, 1000, 127};
 struct menu M23 = {&M22, &M21, &M2, NULL, txt12, &func_menu23, 1000, 127};	
 
@@ -75,36 +76,39 @@ struct menu M31 = {NULL, NULL, &M3, NULL, txt11, &func_menu31, 0, 127};
 
 //wait \004\377
 //command \001\x28
-const char lcd_init[] PROGMEM = "\004\377\001\x28\004\377\001\x28\004\377\001\x28\004\377\001\x0c\004\377\001\x06\004\377\001\x01\004\377";
+const char lcd_init[] PROGMEM = 
+"\004\377\001\x28\004\377\001\x28\004\377\001\x28\004\377\
+\001\x0c\004\377\001\x06\004\377\001\x01\004\377";
 
-ISR(TIMER0_COMP_vect) //10 k Hz = 100 us <-------- P R Z E R W A N I E
+ISR(TIMER0_COMP_vect) //10 k Hz = 100 us
 {
 	uint16_t static period_cnt, period_clock=10000;
 	
-	if(period_clock == 0)
+	if(PINA & _BV(PA0)) //distance sensor
+	distance++;
+
+	if(period_clock == 0) //rtc
 	{
 		time[2]++;
 		lcd_start=true;
 		period_clock=10000;
-		
 	}
 	else if(period_clock> 0)
 	period_clock--;
 
-	buttons_debouncing(); //obsluga przyciskow w przerwaniu
-	lcd_show(); //obsluga LCD w przerwaniu
+	buttons_debouncing();
+	lcd_show();
 
-	if(current_menu -> period != 0)
+	if(current_menu -> period != 0) //do function(2) with specified period (time)
 	{
 		if(period_cnt == 0)
 		{
-			//przypisanie do period_cnt wartosci z danego menu
 			period_cnt = current_menu -> period;
-
+			
 			if((local == 0) && ((current_menu -> function) != NULL))
 			{
-				//(*((*current_menu).function))(2); - czas wykonania dluzszy niz ISR
-				run_function = true;
+				//(*((*current_menu).function))(2); - too long to handle in ISR!
+				run_function = true; //do it in main()
 			}
 		}
 		else if(period_cnt > 0)
@@ -127,6 +131,10 @@ int main (void) // <-------- -------- -------- -------- ----- M A I N
 	//buzzer configuration
 	buzzer_dir = 1;
 	buzzer = 0;
+	
+	//distance sensor conf
+	DDRA = (1<<PA1);
+	PORTA = 0x00;
 	
 	//deklaracja przyciskow i polaryzacja
 	hardware_keys_port = 0xf; //f lub 15 - bo tylko robie pull up na 4 bitach!

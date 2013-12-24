@@ -8,7 +8,8 @@ extern char *lcd_buff;
 extern volatile _Bool run_function;
 extern unsigned int time[3];
 extern unsigned int measurement;
-extern uint8_t first_time[2];
+extern uint8_t first_time[3];
+extern unsigned int distance;
 
 extern const char txt1[];
 extern const char txt2[];
@@ -21,6 +22,7 @@ extern const char txt8[];
 extern const char txt9[];
 extern const char txt10[];
 extern const char txt11[];
+extern const char txt12[];
 
 //deklaracje funkcji lokalnych
 void func_menu11(char c);

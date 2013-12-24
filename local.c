@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "lcd.h"
+#include <util/delay.h>
+#include <avr/interrupt.h>
 
 void sound(uint16_t duration[])
 {
@@ -252,7 +254,6 @@ void func_menu21(char c) //voltmeter
 						ADMUX = 0x00;
 						ADCSRA = 0x00;
 					}
-					lcd_clear();
 					local = 0; //go back
 				}
 			}
@@ -263,10 +264,11 @@ void func_menu21(char c) //voltmeter
 		
 		case 2:
 		{
-			first_time[1]=0; //thermo
+			first_time[1]=0; //thermo + distance (1,2)
+			first_time[2]=0;
+			
 			if(first_time[0]==0)
 			{
-				lcd_clear();
 				adc_toggle_volt=0;
 				ADMUX = 0x00;
 				ADCSRA = 0x00;
@@ -279,7 +281,7 @@ void func_menu21(char c) //voltmeter
 			{
 				integer = 0;
 				fractional = 0;
-				sprintf(lcd_buff,"\001\x80\004\377%s\001\xc0\004\377%.2d.%.3d V (%s)",txt8,integer, fractional, off);
+				sprintf(lcd_buff,"\001\x80\004\377%s       \001\xc0\004\377%.2d.%.3d V (%s)  ",txt8,integer, fractional, off);
 				lcd_buff_full=1;
 			}
 			else
@@ -288,7 +290,7 @@ void func_menu21(char c) //voltmeter
 				integer = (int) temp; //konwersja z float na uint8_t
 				temp = (temp - integer) * 1000.0f;
 				fractional = (int) temp;
-				sprintf(lcd_buff,"\001\x80\004\377%s\001\xc0\004\377%.2d.%.3d V (%s) ",txt8,integer, fractional, on);
+				sprintf(lcd_buff,"\001\x80\004\377%s       \001\xc0\004\377%.2d.%.3d V (%s)   ",txt8,integer, fractional, on);
 				lcd_buff_full=1;
 			}
 			
@@ -338,7 +340,6 @@ void func_menu22(char c) //thermometer
 						ADMUX = 0x00;
 						ADCSRA = 0x00;
 					}
-					lcd_clear();
 					local = 0; //go back
 				}
 			}
@@ -349,10 +350,11 @@ void func_menu22(char c) //thermometer
 		
 		case 2:
 		{
-			first_time[0]=0; //voltmeter
+			first_time[0]=0; //voltmeter + distance (0,2)
+			first_time[2]=0;
+			
 			if(first_time[1]==0)
 			{
-				lcd_clear();
 				adc_toggle_thermo=0;
 				ADMUX = 0x00;
 				ADCSRA = 0x00;
@@ -371,7 +373,7 @@ void func_menu22(char c) //thermometer
 			{
 				integer=0;
 				fractional=0;
-				sprintf(lcd_buff,"\001\x80\004\377%s\001\xc0\004\377%.2d.%.3d C (%s)",txt9, integer, fractional, off);
+				sprintf(lcd_buff,"\001\x80\004\377%s     \001\xc0\004\377%.2d.%.3d C (%s)  ",txt9, integer, fractional, off);
 				lcd_buff_full=1;
 			}
 			else
@@ -381,7 +383,7 @@ void func_menu22(char c) //thermometer
 				integer = (int) temp; //conversion from float to uint8_t
 				temp = (temp - integer) * 100.0f;
 				fractional = (int) temp;
-				sprintf(lcd_buff,"\001\x80\004\377%s\001\xc0\004\377%.2d.%.3d C (%s) ",txt9, integer, fractional, on);
+				sprintf(lcd_buff,"\001\x80\004\377%s     \001\xc0\004\377%.2d.%.3d C (%s)   ",txt9, integer, fractional, on);
 				lcd_buff_full=1;
 			}
 			
@@ -390,9 +392,95 @@ void func_menu22(char c) //thermometer
 	}
 }
 
-void func_menu23(char c)
+void func_menu23(char c) //distance
 {
-	local = 0;
+	switch(c)
+	{
+		static uint8_t toggle_distance=0;
+		case 1:
+		{
+			if(keys!=0)
+			{
+				
+				switch(keys)
+				{
+					case 1: //escape
+					local--;
+					break;
+
+					case 2:
+					;
+					break;
+
+					case 4:
+					;
+					break;
+
+					case 8: //enter local
+					local++;
+					break;
+				}
+				if(local)
+				{
+					toggle_distance = (toggle_distance + 1) % 2;
+					if(toggle_distance)
+					{
+						PORTA |= (1<<PA1);
+						_delay_us(15);
+						PORTA &= ~(1<<PA1);
+					}
+					else
+					{
+						distance = 0;
+					}
+					local = 0; //go back
+				}
+			}
+			else
+			keys=255;
+		}
+		break;
+		
+		case 2:
+		{
+			first_time[0]=0; //voltmeter + thermo (0,1)
+			first_time[1]=0;
+			if(first_time[2]==0)
+			{
+				distance = 0;
+				toggle_distance=0;
+				first_time[2]++;
+			}
+			float temp;
+			int integer, fractional;
+			const char on[]="on", off[]="off";
+			if(toggle_distance==0)
+			{
+				integer=0;
+				fractional=0;
+				sprintf(lcd_buff,"\001\x80\004\377%s (cm)\001\xc0\004\377%.3d.%.3d (%s)   ",txt12, integer, fractional, off);
+				lcd_buff_full=1;
+			}
+			else
+			{
+				//temp = distance*3400.0f/2000.0f - from web, do not work correctly;
+				/* SciDavis said:
+				Linear Regression fit of dataset: Table1_2, using function: A*x+B
+				Y standard errors: Unknown
+				From x = 18 to x = 61
+				B (y-intercept) = 0,472070075080443 +/- 0,432052891875861
+				A (slope) = 1,6910207365034 +/- 0,0112965138865972 */
+				temp = distance*1.69f+0.47f;
+				integer = (int) temp; //conversion from float to int
+				temp = (temp - integer) * 100.0f;
+				fractional = (int) temp;
+				sprintf(lcd_buff,"\001\x80\004\377%s (cm)\001\xc0\004\377%.3d.%.2d (%s)     ",txt12, integer, fractional, on);
+				lcd_buff_full=1;
+			}
+			
+		}
+		break;
+	}
 }
 
 void func_menu31(char c)
