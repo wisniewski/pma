@@ -267,7 +267,7 @@ void func_menu21(char c) //voltmeter
 			integer = (int) temp; //konwersja z float na uint8_t
 			temp = (temp - integer) * 1000.0f;
 			fractional = (int) temp;
-			sprintf(lcd_buff,"\001\x80\004\xff\001\x0c\004\377%s\001\xc4%d.%.3d V\001\xcf%c",txt8,integer, fractional, 127);
+			sprintf(lcd_buff,"%s\001\xc4%d.%.3d V\001\xcf%c",txt8,integer, fractional, 127);
 			lcd_buff_full=1;
 		}
 		break;
@@ -306,14 +306,14 @@ void func_menu22(char c) //thermometer
 					if(adc_toggle) //turn on ADC, prescaler 64 (125kHz), free runing mode, enable interrupts, start conv
 					{
 						//ADC - ref. voltage from Vcc, PA7 to voltometer (111), PA6 to thermometer (110)
-						ADMUX = 0x00;
-						ADCSRA = 0x00;
-					}
-					else
-					{
 						ADMUX |= (1<<REFS0) | (1<<MUX1) | (1<<MUX2);
 						ADCSRA |= (1<<ADEN) | (1<<ADATE) | (1<<ADIE) | (1<<ADSC) | (1<<ADPS2) | (1<<ADPS1);
 						
+					}
+					else
+					{
+						ADMUX = 0x00;
+						ADCSRA = 0x00;
 					}
 					sprintf(lcd_buff,"\001\x01\004\377");
 					lcd_buff_full=1;
@@ -339,7 +339,7 @@ void func_menu22(char c) //thermometer
 			integer = (int) temp; //conversion from float to uint8_t
 			temp = (temp - integer) * 100.0f;
 			fractional = (int) temp;
-			sprintf(lcd_buff,"2\001\xc4%d.%.2d C\001\xcf%c",integer, fractional, 127);
+			sprintf(lcd_buff,"\001\xc4\004\377%d.%.2d C\001\xcf%c",integer, fractional, 127);
 			lcd_buff_full=1;
 		}
 		break;
