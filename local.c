@@ -5,8 +5,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "lcd.h"
+
 #include <util/delay.h>
-#include <avr/interrupt.h>
 
 void sound(uint16_t duration[])
 {
@@ -391,7 +391,6 @@ void func_menu22(char c) //thermometer
 		break;
 	}
 }
-
 void func_menu23(char c) //distance
 {
 	switch(c)
@@ -426,8 +425,11 @@ void func_menu23(char c) //distance
 					if(toggle_distance)
 					{
 						PORTA |= (1<<PA1);
-						_delay_us(15);
+						for(uint8_t i = 100; i>0; i--) //80 -> 10 us, ~100 us for certainty
+						asm volatile ("nop");
 						PORTA &= ~(1<<PA1);
+						//uint8_t temp = time[2]; - another way to make delay ~1 is
+						//while(temp == time[2])
 					}
 					else
 					{
@@ -483,7 +485,90 @@ void func_menu23(char c) //distance
 	}
 }
 
-void func_menu31(char c)
+void func_menu31(char c) //servo
 {
-	local = 0;
+	/*switch(c)
+	{
+	//static uint8_t toggle_servo=0;
+	case 1:
+	{
+	sprintf(lcd_buff,"\001\x01\004\xff");
+	if(keys!=0)
+	{
+	switch(keys)
+	{
+	case 1: //Escape
+	local--;
+	break;
+
+	case 2://MINUS
+	{
+	;
+	}
+	break;
+
+	case 4://PLUS
+	;
+	break;
+
+	case 8://Enter
+	if(local<2)
+	local++;
+	else
+	local=1;
+	break;
+	}
+	
+	//wykonanie sie TYLKO podczas przycisniecia, nie ma potrzeby odswiezania
+	//co chwile
+	if(local!=0)
+	{
+	
+	switch(local)
+	{
+	case 1: //godziny
+	{
+
+	sprintf(lcd_buff,"\001\x80\004\xff off");
+	lcd_buff_full=1;
+	OCR1A = (unsigned int) ICR1 / 10;
+	//local = 0;
+	}
+	break;
+	
+	case 2: //minuty
+	{
+	sprintf(lcd_buff,"\001\x80\004\xff on");
+	lcd_buff_full=1;
+	OCR1A = (unsigned int) ICR1 / 25;
+	}
+	break;
+	
+	
+	}
+	keys = 0;
+	}
+	else
+	keys=255;
+	}
+	}
+	break;
+	
+	case 2:
+	{
+	/ *const char on[]="on", off[]="off";
+	if(toggle_servo==0)
+	{
+	sprintf(lcd_buff,"\001\x80\004\377%s",off);
+	lcd_buff_full=1;
+	}
+	else
+	{
+	sprintf(lcd_buff,"\001\x80\004\377%s",on);
+	lcd_buff_full=1;
+	}* /
+	
+	}
+	break;
+	}*/
 }

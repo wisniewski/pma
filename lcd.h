@@ -13,21 +13,21 @@ struct lcd_field //definicja struktury <-------- P O L A  B I T O W E
 	volatile char data : 4; //dostep do d4-d7 w LCD
 };
 
-#define lcd_rs ((*((struct lcd_field *) &PORTD)).rs) //0 lub 1 na pinie
-#define lcd_rs_dir (((struct lcd_field *) &DDRD) -> rs)
+#define lcd_rs ((*((struct lcd_field *) &PORTC)).rs) //0 lub 1 na pinie
+#define lcd_rs_dir (((struct lcd_field *) &DDRC) -> rs)
 //operator wyluskania pola -> jesli mamy wskaznik do struktury, INICJALIZACJA
 
-#define lcd_rw ((*((struct lcd_field *) &PORTD)).rw) //0 lub 1 na pinie
-#define lcd_rw_dir (((struct lcd_field *) &DDRD) -> rw) //inicjalizacja
+#define lcd_rw ((*((struct lcd_field *) &PORTC)).rw) //0 lub 1 na pinie
+#define lcd_rw_dir (((struct lcd_field *) &DDRC) -> rw) //inicjalizacja
 
-#define lcd_e ((*((struct lcd_field *) &PORTD)).e) //0 lub 1 na pinie
-#define lcd_e_dir (((struct lcd_field *) &DDRD) -> e) //inicjalizacja
+#define lcd_e ((*((struct lcd_field *) &PORTC)).e) //0 lub 1 na pinie
+#define lcd_e_dir (((struct lcd_field *) &DDRC) -> e) //inicjalizacja
 
-#define buzzer ((*((struct lcd_field *) &PORTD)).buz) //0 lub 1 na pinie
-#define buzzer_dir (((struct lcd_field *) &DDRD) -> buz) //inicjalizacja
+#define buzzer ((*((struct lcd_field *) &PORTC)).buz) //0 lub 1 na pinie
+#define buzzer_dir (((struct lcd_field *) &DDRC) -> buz) //inicjalizacja
 
-#define lcd_data ((*((struct lcd_field *) &PORTD)).data) //0 lub 1 na pinie
-#define lcd_data_dir (((struct lcd_field *) &DDRD) -> data) //inicjalizacja
+#define lcd_data ((*((struct lcd_field *) &PORTC)).data) //0 lub 1 na pinie
+#define lcd_data_dir (((struct lcd_field *) &DDRC) -> data) //inicjalizacja
 
 //deklaracje uzytych funkcji
 void lcd_initiation (char data, char rs);

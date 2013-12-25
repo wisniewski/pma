@@ -54,8 +54,8 @@ const char txt7[] = "Voltmeter\001\xc0\004\377Thermometer";
 const char txt8[] = "Voltmeter";
 const char txt9[] = "Thermometer";
 //menu 3 - motor
-const char txt10[] = "Motor Control";
-const char txt11[] = "\001\x84\004\377Dziekuje\001\xc2\004\377i nawzajem :)";
+const char txt10[] = "Servo Control";
+const char txt11[] = "Servo Angle";
 const char txt12[] = "Distance";
 
 //definicja odwoluje sie do innych elementow {lewo, prawo, gora nic, dol, "string"}
@@ -72,7 +72,7 @@ struct menu M22 = {&M21, &M23, &M2, NULL, txt9, &func_menu22, 1000, 127};
 struct menu M23 = {&M22, &M21, &M2, NULL, txt12, &func_menu23, 1000, 127};	
 
 struct menu M3 = {&M2, &M1, NULL, &M31, txt10, NULL, 0, 126};
-struct menu M31 = {NULL, NULL, &M3, NULL, txt11, &func_menu31, 0, 127};
+struct menu M31 = {NULL, NULL, &M3, NULL, txt11, &func_menu31, 10000, 127};
 
 //wait \004\377
 //command \001\x28
@@ -155,7 +155,7 @@ int main (void) // <-------- -------- -------- -------- ----- M A I N
 	current_menu = &M1;
 	sei();
 	while(lcd_start==false); //wait 1 second
-	
+
 	//obsluga przyciskow i poruszanie sie po menu
 	while(1)
 	{
