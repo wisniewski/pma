@@ -56,7 +56,7 @@ const char txt7[] = "Voltmeter\001\xc0\004\377Thermometer";
 const char txt8[] = "Voltmeter";
 const char txt9[] = "Thermometer";
 //menu 3 - motor
-const char txt10[] = "Stepper Motor";
+const char txt10[] = "Stepper Motor   ";
 const char txt11[] = "SM Config";
 const char txt12[] = "Distance";
 

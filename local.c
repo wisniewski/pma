@@ -461,7 +461,6 @@ void func_menu23(char c) //distance
 				sprintf(lcd_buff,"\001\x80\004\377%s (cm)\001\xc0\004\377%.3d.%.2d (%s)     ",txt12, integer, fractional, on);
 				lcd_buff_full=1;
 			}
-			
 		}
 		break;
 	}
@@ -474,12 +473,12 @@ void func_menu31(char c) //Stepper motor
 		unsigned int slowdown;
 		unsigned int direction;
 		unsigned int steps;
+		uint8_t temporary_slowdown;
+		uint16_t temporary_steps;
 	} stepper;
 	
-	static stepper motor={0,0,0};
-	static uint8_t slowdown;
-	static uint16_t steps;
-	
+	static stepper motor={0,0,0,0,0};
+
 	
 	switch(c)
 	{
@@ -490,7 +489,10 @@ void func_menu31(char c) //Stepper motor
 				switch(keys)
 				{
 					case 1: //Escape
-					local--;
+					{
+						local--;
+						keys=0;
+					}
 					break;
 
 					case 2://MINUS
@@ -500,7 +502,7 @@ void func_menu31(char c) //Stepper motor
 							case 0: //slowdown 0 - 10
 							{
 								motor.slowdown = (motor.slowdown+10)%11;
-								slowdown = motor.slowdown;
+								motor.temporary_slowdown = motor.slowdown;
 							}
 							break;
 							
@@ -517,6 +519,7 @@ void func_menu31(char c) //Stepper motor
 							}
 							break;
 						}
+						keys=0;
 					}
 					break;
 
@@ -527,7 +530,7 @@ void func_menu31(char c) //Stepper motor
 							case 0: //slowdown 0 - 10
 							{
 								motor.slowdown = (motor.slowdown+1)%11;
-								slowdown = motor.slowdown;
+								motor.temporary_slowdown = motor.slowdown;
 							}
 							break;
 							
@@ -543,6 +546,7 @@ void func_menu31(char c) //Stepper motor
 							}
 							break;
 						}
+						keys=0;
 					}
 					break;
 
@@ -552,69 +556,66 @@ void func_menu31(char c) //Stepper motor
 						local++;
 						else
 						local=1;
+						keys=0;
 					}
 					break;
 				}
-				
-				//wykonanie sie TYLKO podczas przycisniecia, nie ma potrzeby odswiezania co chwile
-				if(local)
+			}
+			
+			//wykonanie sie TYLKO podczas przycisniecia, nie ma potrzeby odswiezania co chwile
+			if(local)
+			{
+				switch(local-1)
 				{
-					switch(local-1)
+					case 0: //slowdown
 					{
-						case 0: //slowdown
-						{
-							if(motor.slowdown==0)
-							sprintf(lcd_buff,"\001\x01\004\377\001\x80\004\377Slowdown: none");
-							else
-							sprintf(lcd_buff,"\001\x01\004\377\001\x80\004\377Slowdown: %ux",motor.slowdown);
-							lcd_buff_full=1;
-						}
-						break;
-						
-						case 1: //direction
-						{
-							if(motor.direction)
-							sprintf(lcd_buff,"\001\x01\004\377\001\x80\004\377Direction: CW");
-							else
-							sprintf(lcd_buff,"\001\x01\004\377\001\x80\004\377Direction: CCW");
-							lcd_buff_full=1;
-						}
-						break;
-						
-						case 2: //steps
-						{
-							
-							/* SciDavis said:
-							Linear Regression fit of dataset: Table1_2, using function: A*x+B
-							Y standard errors: Unknown
-							From x = 5,625 to x = 360
-							B (y-intercept) = 0 +/- 7,56647835265711e-18
-							A (slope) = 11,3777777777778 +/- 3,5982833466408e-20 */
-							
-							float angle;
-							unsigned int integer, fractional;
-							
-							angle = motor.steps / 11.3777777777778f;
-							integer = (int) angle; //conversion from float to uint8_t
-							angle = (angle - integer) * 1000.0f;
-							fractional = (int) angle;
-							
-							if(motor.steps==4160)
-							sprintf(lcd_buff,"\001\x01\004\377\001\x80\004\377Angle: infinity");
-							else if(motor.steps==0)
-							sprintf(lcd_buff,"\001\x01\004\377\001\x80\004\377Angle: none");
-							else
-							sprintf(lcd_buff,"\001\x01\004\377\001\x80\004\377Angle: %.3u.%.3u",integer,fractional);
-							lcd_buff_full=1;
-							
-							steps = motor.steps;
-						}
-						break;
+						if(motor.slowdown==0)
+						sprintf(lcd_buff,"\001\x80\004\377Slowdown: none  ");
+						else
+						sprintf(lcd_buff,"\001\x80\004\377Slowdown: %ux    ",motor.slowdown);
+						lcd_buff_full=1;
 					}
-					keys = 0;
+					break;
+					
+					case 1: //direction
+					{
+						if(motor.direction)
+						sprintf(lcd_buff,"\001\x80\004\377Direction: CW   ");
+						else
+						sprintf(lcd_buff,"\001\x80\004\377Direction: CCW  ");
+						lcd_buff_full=1;
+					}
+					break;
+					
+					case 2: //steps
+					{
+						/* SciDavis said:
+						Linear Regression fit of dataset: Table1_2, using function: A*x+B
+						Y standard errors: Unknown
+						From x = 5,625 to x = 360
+						B (y-intercept) = 0 +/- 7,56647835265711e-18
+						A (slope) = 11,3777777777778 +/- 3,5982833466408e-20 */
+						
+						float angle;
+						unsigned int integer, fractional;
+						
+						angle = motor.steps / 11.3777777777778f;
+						integer = (int) angle; //conversion from float to uint8_t
+						angle = (angle - integer) * 1000.0f;
+						fractional = (int) angle;
+						
+						if(motor.steps==4160)
+						sprintf(lcd_buff,"\001\x80\004\377Angle: infinity ");
+						else if(motor.steps==0)
+						sprintf(lcd_buff,"\001\x80\004\377Angle: none     ");
+						else
+						sprintf(lcd_buff,"\001\x80\004\377Angle: %.3u.%.3u  ",integer,fractional);
+						lcd_buff_full=1;
+						
+						motor.temporary_steps = motor.steps;
+					}
+					break;
 				}
-				else
-				keys=255;
 			}
 		}
 		break;
@@ -622,41 +623,41 @@ void func_menu31(char c) //Stepper motor
 		case 2:
 		{
 			static uint8_t i=0;
-			if(steps==0)
+			if(motor.temporary_steps==0)
 			{
 				PORTD = 0x00;
-				sprintf(lcd_buff,"\001\x80\004\377%s: Off",txt11);
+				sprintf(lcd_buff,"\001\x80\004\377%s: Off  ",txt11);
 				lcd_buff_full=1;
 			}
 			else
 			{
-				if(slowdown == 0)
+				if(motor.temporary_slowdown == 0)
 				{
-					if(steps<4160)
+					if(motor.temporary_steps<4160)
 					{
-						if(steps)
+						if(motor.temporary_steps)
 						{
 							PORTD = pgm_read_byte(&moves[i]);
-							steps--;
+							motor.temporary_steps--;
 						}
 					}
 					else if(motor.steps==4160)//infinity
 					{
-						PORTD = pgm_read_byte(&moves[i]);	
+						PORTD = pgm_read_byte(&moves[i]);
 					}
 					//again wait
-					slowdown = motor.slowdown;
+					motor.temporary_slowdown = motor.slowdown;
 					
 					if(motor.direction) //CW or CCW - motor direction
 					i=(i+1)%8;
 					else
 					i=(i+7)%8;
 					
-					sprintf(lcd_buff,"\001\x80\004\377%s: On",txt11);
+					sprintf(lcd_buff,"\001\x80\004\377%s: On   ",txt11);
 					lcd_buff_full=1;
 				}
-				else if(slowdown>0)
-				slowdown--;
+				else if(motor.temporary_slowdown>0)
+				motor.temporary_slowdown--;
 			}
 		}
 		break;
