@@ -7,8 +7,6 @@
 #include "lcd.h"
 #include <avr/pgmspace.h>
 
-#include <util/delay.h>
-
 void sound(uint16_t duration[])
 {
 	volatile int i;
@@ -308,19 +306,10 @@ void func_menu22(char c) //thermometer
 		{
 			if(keys!=0)
 			{
-				
 				switch(keys)
 				{
 					case 1: //escape
 					local--;
-					break;
-
-					case 2:
-					;
-					break;
-
-					case 4:
-					;
 					break;
 
 					case 8: //enter local
@@ -406,14 +395,6 @@ void func_menu23(char c) //distance
 				{
 					case 1: //escape
 					local--;
-					break;
-
-					case 2:
-					;
-					break;
-
-					case 4:
-					;
 					break;
 
 					case 8: //enter local
@@ -573,23 +554,19 @@ void func_menu31(char c) //Stepper motor
 						local=1;
 					}
 					break;
-					
-					
 				}
 				
 				//wykonanie sie TYLKO podczas przycisniecia, nie ma potrzeby odswiezania co chwile
-				if(local!=0)
+				if(local)
 				{
-					sprintf(lcd_buff,"\001\x01\004\xff");
-					lcd_buff_full=1;
 					switch(local-1)
 					{
 						case 0: //slowdown
 						{
 							if(motor.slowdown==0)
-							sprintf(lcd_buff,"\001\x01\004\xff\001\x80\004\377Slowdown: none");
+							sprintf(lcd_buff,"\001\x01\004\377\001\x80\004\377Slowdown: none");
 							else
-							sprintf(lcd_buff,"\001\x01\004\xff\001\x80\004\377Slowdown: %ux",motor.slowdown);
+							sprintf(lcd_buff,"\001\x01\004\377\001\x80\004\377Slowdown: %ux",motor.slowdown);
 							lcd_buff_full=1;
 						}
 						break;
@@ -597,15 +574,23 @@ void func_menu31(char c) //Stepper motor
 						case 1: //direction
 						{
 							if(motor.direction)
-							sprintf(lcd_buff,"\001\x01\004\xff\001\x80\004\377Direction: CW");
+							sprintf(lcd_buff,"\001\x01\004\377\001\x80\004\377Direction: CW");
 							else
-							sprintf(lcd_buff,"\001\x01\004\xff\001\x80\004\377Direction: CCW");
+							sprintf(lcd_buff,"\001\x01\004\377\001\x80\004\377Direction: CCW");
 							lcd_buff_full=1;
 						}
 						break;
 						
 						case 2: //steps
 						{
+							
+							/* SciDavis said:
+							Linear Regression fit of dataset: Table1_2, using function: A*x+B
+							Y standard errors: Unknown
+							From x = 5,625 to x = 360
+							B (y-intercept) = 0 +/- 7,56647835265711e-18
+							A (slope) = 11,3777777777778 +/- 3,5982833466408e-20 */
+							
 							float angle;
 							unsigned int integer, fractional;
 							
@@ -615,11 +600,11 @@ void func_menu31(char c) //Stepper motor
 							fractional = (int) angle;
 							
 							if(motor.steps==4160)
-							sprintf(lcd_buff,"\001\x01\004\xff\001\x80\004\377Angle: infinity");
+							sprintf(lcd_buff,"\001\x01\004\377\001\x80\004\377Angle: infinity");
 							else if(motor.steps==0)
-							sprintf(lcd_buff,"\001\x01\004\xff\001\x80\004\377Angle: none");
+							sprintf(lcd_buff,"\001\x01\004\377\001\x80\004\377Angle: none");
 							else
-							sprintf(lcd_buff,"\001\x01\004\xff\001\x80\004\377Angle: %.3u.%.3u",integer,fractional);
+							sprintf(lcd_buff,"\001\x01\004\377\001\x80\004\377Angle: %.3u.%.3u",integer,fractional);
 							lcd_buff_full=1;
 							
 							steps = motor.steps;
@@ -647,31 +632,26 @@ void func_menu31(char c) //Stepper motor
 			{
 				if(slowdown == 0)
 				{
-					if(steps<4160) 
+					if(steps<4160)
 					{
 						if(steps)
 						{
 							PORTD = pgm_read_byte(&moves[i]);
-							if(motor.direction) //CW or CCW - motor direction
-							i=(i+1)%8;
-							else
-							i=(i+7)%8;
 							steps--;
-							//again wait
-							slowdown = motor.slowdown;
 						}
 					}
 					else if(motor.steps==4160)//infinity
 					{
-						PORTD = pgm_read_byte(&moves[i]);
-						if(motor.direction) //CW or CCW - motor direction
-						i=(i+1)%8;
-						else
-						i=(i+7)%8;
-						
-						//again wait
-						slowdown = motor.slowdown;
-					}	
+						PORTD = pgm_read_byte(&moves[i]);	
+					}
+					//again wait
+					slowdown = motor.slowdown;
+					
+					if(motor.direction) //CW or CCW - motor direction
+					i=(i+1)%8;
+					else
+					i=(i+7)%8;
+					
 					sprintf(lcd_buff,"\001\x80\004\377%s: On",txt11);
 					lcd_buff_full=1;
 				}

@@ -222,7 +222,6 @@ int main (void) // <-------- -------- -------- -------- ----- M A I N
 		else
 		{
 			(*((*current_menu).function))(1);
-			//keys = 0;
 		}
 		
 		
