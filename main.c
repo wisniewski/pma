@@ -26,6 +26,8 @@ uint8_t first_time[3]={0};
 unsigned int measurement = 0; //adc
 unsigned int distance = 0; //HC-SR04 distance sensor
 
+const uint8_t PROGMEM moves[8]={1, 3, 2, 6, 4, 12, 8, 9};
+
 //struktura menu // <-------- --------- ------- M E N U
 struct menu
 {
@@ -54,8 +56,8 @@ const char txt7[] = "Voltmeter\001\xc0\004\377Thermometer";
 const char txt8[] = "Voltmeter";
 const char txt9[] = "Thermometer";
 //menu 3 - motor
-const char txt10[] = "Servo Control";
-const char txt11[] = "Servo Angle";
+const char txt10[] = "Stepper Motor";
+const char txt11[] = "SM Config";
 const char txt12[] = "Distance";
 
 //definicja odwoluje sie do innych elementow {lewo, prawo, gora nic, dol, "string"}
@@ -72,7 +74,7 @@ struct menu M22 = {&M21, &M23, &M2, NULL, txt9, &func_menu22, 1000, 127};
 struct menu M23 = {&M22, &M21, &M2, NULL, txt12, &func_menu23, 1000, 127};	
 
 struct menu M3 = {&M2, &M1, NULL, &M31, txt10, NULL, 0, 126};
-struct menu M31 = {NULL, NULL, &M3, NULL, txt11, &func_menu31, 10000, 127};
+struct menu M31 = {NULL, NULL, &M3, NULL, txt11, &func_menu31, 10, 127};
 
 //wait \004\377
 //command \001\x28
@@ -145,6 +147,9 @@ int main (void) // <-------- -------- -------- -------- ----- M A I N
 	lcd_e_dir = 1;
 	lcd_data_dir = 0xf;
 	
+	//stepper conf
+	PORTD |= 0xff;
+	
 	//wyswietlanie napisu na lcd
 	lcd_buff = malloc(80);
 	sprintf_P(lcd_buff, lcd_init);
@@ -203,10 +208,9 @@ int main (void) // <-------- -------- -------- -------- ----- M A I N
 					local = 1;
 					break;
 				}
-				if((current_menu -> function) == NULL)
-				{//jezeli nic nie naciskalismy to niech sie wyswietla obecne menu
+				//jezeli nic nie naciskalismy to niech sie wyswietla obecne menu
 				sprintf(lcd_buff,"\001\x01\004\377%s",current_menu->str);
-				lcd_buff_full = 1;}
+				lcd_buff_full = 1;
 				keys = 0;
 			}
 			if(run_function)
@@ -218,7 +222,7 @@ int main (void) // <-------- -------- -------- -------- ----- M A I N
 		else
 		{
 			(*((*current_menu).function))(1);
-			keys = 255;
+			//keys = 0;
 		}
 		
 		

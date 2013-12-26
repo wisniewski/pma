@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include "lcd.h"
+#include <avr/pgmspace.h>
 
 #include <util/delay.h>
 
@@ -485,90 +486,200 @@ void func_menu23(char c) //distance
 	}
 }
 
-void func_menu31(char c) //servo
+void func_menu31(char c) //Stepper motor
 {
-	/*switch(c)
+	typedef struct motor_data
 	{
-	//static uint8_t toggle_servo=0;
-	case 1:
+		unsigned int slowdown;
+		unsigned int direction;
+		unsigned int steps;
+	} stepper;
+	
+	static stepper motor={0,0,0};
+	static uint8_t slowdown;
+	static uint16_t steps;
+	
+	
+	switch(c)
 	{
-	sprintf(lcd_buff,"\001\x01\004\xff");
-	if(keys!=0)
-	{
-	switch(keys)
-	{
-	case 1: //Escape
-	local--;
-	break;
+		case 1:
+		{
+			if(keys!=0)
+			{
+				switch(keys)
+				{
+					case 1: //Escape
+					local--;
+					break;
 
-	case 2://MINUS
-	{
-	;
-	}
-	break;
+					case 2://MINUS
+					{
+						switch(local-1)
+						{
+							case 0: //slowdown 0 - 10
+							{
+								motor.slowdown = (motor.slowdown+10)%11;
+								slowdown = motor.slowdown;
+							}
+							break;
+							
+							case 1: //direction 0 - 1 (left - right)
+							{
+								motor.direction = (motor.direction+1)%2;
+							}
+							break;
+							
+							case 2: //direction 0 - 1 (left - right)
+							{
+								motor.steps = (motor.steps+4160)%4224;
+								
+							}
+							break;
+						}
+					}
+					break;
 
-	case 4://PLUS
-	;
-	break;
+					case 4://PLUS
+					{
+						switch(local-1)
+						{
+							case 0: //slowdown 0 - 10
+							{
+								motor.slowdown = (motor.slowdown+1)%11;
+								slowdown = motor.slowdown;
+							}
+							break;
+							
+							case 1: //direction 0 - 1 (left - right)
+							{
+								motor.direction = (motor.direction+1)%2;
+							}
+							break;
+							
+							case 2: //direction 0 - 1 (left - right)
+							{
+								motor.steps = (motor.steps+64)%4224;
+							}
+							break;
+						}
+					}
+					break;
 
-	case 8://Enter
-	if(local<2)
-	local++;
-	else
-	local=1;
-	break;
+					case 8://Enter
+					{
+						if(local<3)
+						local++;
+						else
+						local=1;
+					}
+					break;
+					
+					
+				}
+				
+				//wykonanie sie TYLKO podczas przycisniecia, nie ma potrzeby odswiezania co chwile
+				if(local!=0)
+				{
+					sprintf(lcd_buff,"\001\x01\004\xff");
+					lcd_buff_full=1;
+					switch(local-1)
+					{
+						case 0: //slowdown
+						{
+							if(motor.slowdown==0)
+							sprintf(lcd_buff,"\001\x01\004\xff\001\x80\004\377Slowdown: none");
+							else
+							sprintf(lcd_buff,"\001\x01\004\xff\001\x80\004\377Slowdown: %ux",motor.slowdown);
+							lcd_buff_full=1;
+						}
+						break;
+						
+						case 1: //direction
+						{
+							if(motor.direction)
+							sprintf(lcd_buff,"\001\x01\004\xff\001\x80\004\377Direction: CW");
+							else
+							sprintf(lcd_buff,"\001\x01\004\xff\001\x80\004\377Direction: CCW");
+							lcd_buff_full=1;
+						}
+						break;
+						
+						case 2: //steps
+						{
+							float angle;
+							unsigned int integer, fractional;
+							
+							angle = motor.steps / 11.3777777777778f;
+							integer = (int) angle; //conversion from float to uint8_t
+							angle = (angle - integer) * 1000.0f;
+							fractional = (int) angle;
+							
+							if(motor.steps==4160)
+							sprintf(lcd_buff,"\001\x01\004\xff\001\x80\004\377Angle: infinity");
+							else if(motor.steps==0)
+							sprintf(lcd_buff,"\001\x01\004\xff\001\x80\004\377Angle: none");
+							else
+							sprintf(lcd_buff,"\001\x01\004\xff\001\x80\004\377Angle: %.3u.%.3u",integer,fractional);
+							lcd_buff_full=1;
+							
+							steps = motor.steps;
+						}
+						break;
+					}
+					keys = 0;
+				}
+				else
+				keys=255;
+			}
+		}
+		break;
+		
+		case 2:
+		{
+			static uint8_t i=0;
+			if(steps==0)
+			{
+				PORTD = 0x00;
+				sprintf(lcd_buff,"\001\x80\004\377%s: Off",txt11);
+				lcd_buff_full=1;
+			}
+			else
+			{
+				if(slowdown == 0)
+				{
+					if(steps<4160) 
+					{
+						if(steps)
+						{
+							PORTD = pgm_read_byte(&moves[i]);
+							if(motor.direction) //CW or CCW - motor direction
+							i=(i+1)%8;
+							else
+							i=(i+7)%8;
+							steps--;
+							//again wait
+							slowdown = motor.slowdown;
+						}
+					}
+					else if(motor.steps==4160)//infinity
+					{
+						PORTD = pgm_read_byte(&moves[i]);
+						if(motor.direction) //CW or CCW - motor direction
+						i=(i+1)%8;
+						else
+						i=(i+7)%8;
+						
+						//again wait
+						slowdown = motor.slowdown;
+					}	
+					sprintf(lcd_buff,"\001\x80\004\377%s: On",txt11);
+					lcd_buff_full=1;
+				}
+				else if(slowdown>0)
+				slowdown--;
+			}
+		}
+		break;
 	}
-	
-	//wykonanie sie TYLKO podczas przycisniecia, nie ma potrzeby odswiezania
-	//co chwile
-	if(local!=0)
-	{
-	
-	switch(local)
-	{
-	case 1: //godziny
-	{
-
-	sprintf(lcd_buff,"\001\x80\004\xff off");
-	lcd_buff_full=1;
-	OCR1A = (unsigned int) ICR1 / 10;
-	//local = 0;
-	}
-	break;
-	
-	case 2: //minuty
-	{
-	sprintf(lcd_buff,"\001\x80\004\xff on");
-	lcd_buff_full=1;
-	OCR1A = (unsigned int) ICR1 / 25;
-	}
-	break;
-	
-	
-	}
-	keys = 0;
-	}
-	else
-	keys=255;
-	}
-	}
-	break;
-	
-	case 2:
-	{
-	/ *const char on[]="on", off[]="off";
-	if(toggle_servo==0)
-	{
-	sprintf(lcd_buff,"\001\x80\004\377%s",off);
-	lcd_buff_full=1;
-	}
-	else
-	{
-	sprintf(lcd_buff,"\001\x80\004\377%s",on);
-	lcd_buff_full=1;
-	}* /
-	
-	}
-	break;
-	}*/
 }
+

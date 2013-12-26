@@ -11,6 +11,8 @@ extern unsigned int measurement;
 extern uint8_t first_time[3];
 extern unsigned int distance;
 
+extern const uint8_t moves[8];
+
 extern const char txt1[];
 extern const char txt2[];
 extern const char txt3[];
