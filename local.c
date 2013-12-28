@@ -1,11 +1,4 @@
-﻿#include <stdio.h> //sprintf
-#include <stdlib.h> //malloc
-#include "local.h"
-#include <avr/io.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include "lcd.h"
-#include <avr/pgmspace.h>
+﻿#include "local.h"
 
 void sound(uint16_t duration[])
 {
@@ -22,129 +15,152 @@ void sound(uint16_t duration[])
 
 void func_menu11(char c) //Zegar czasu rzeczywistego - RTC
 {
+	typedef struct rtc_time
+	{
+		uint8_t seconds;
+		uint8_t minutes;
+		uint8_t hours;
+	} rtc;
+	rtc time;
+	
+	typedef struct rtc_date
+	{
+		uint8_t day_week;
+		uint8_t day_month;
+		uint8_t month;
+		uint8_t year;
+	} rtc2;
+	rtc2 date;
+	
 	switch(c)
 	{
-		//edycja zegara RTC
 		case 1:
 		{
-			if(keys!=0)
+			/*if(keys!=0)
 			{
-				switch(keys)
-				{
-					case 1: //Escape
-					local--;
-					break;
+			switch(keys)
+			{
+			case 1: //Escape
+			local--;
+			break;
 
-					case 2://MINUS
-					{
-						switch(local-1)
-						{
-							case 0:
-							{
-								if(time[local-1]>0)
-								time[local-1]--;
-								else
-								time[local-1]=23;
-							}
-							break;
-							case 1:
-							case 2:
-							{
-								if(time[local-1]>0)
-								time[local-1]--;
-								else
-								time[local-1]=59;
-							}
-							break;
-						}
-					}
-					break;
-
-					case 4://PLUS
-					time[local-1]++;
-					break;
-
-					case 8://Enter
-					if(local<3)
-					local++;
-					else
-					local=1;
-					break;
-				}
-				
-				//wykonanie sie TYLKO podczas przycisniecia, nie ma potrzeby odswiezania
-				//co chwile
-				if(local!=0)
-				{
-					sprintf(lcd_buff,"\001\x01\004\xff");
-					switch(local-1)
-					{
-						case 0: //godziny
-						{
-							time[local-1] %= 24;
-							if(time[local-1] < 12)
-							sprintf(lcd_buff,"\001\x01\004\xff\001\x0c\004\377\001\x83\004\377Hour (AM):\001\xc7\004\377%.2u\001\xcf\004\377%c",time[local-1], 127);
-							else
-							sprintf(lcd_buff,"\001\x01\004\xff\001\x0c\004\377\001\x83\004\377Hour (PM):\001\xc7\004\377%.2u\001\xcf\004\377%c",time[local-1], 127);
-							
-							lcd_buff_full=1;
-						}
-						break;
-						
-						case 1: //minuty
-						{
-							time[local-1] %= 60;
-							sprintf(lcd_buff,"\001\x01\004\xff\001\x0c\004\377\001\x84\004\377Minutes:\001\xc7\004\377%.2u\001\xcf\004\377%c",time[local-1], 127);
-							lcd_buff_full=1;
-						}
-						break;
-						
-						case 2: //sekundy
-						{
-							time[local-1] %= 60;
-							sprintf(lcd_buff,"\001\x01\004\xff\001\x0c\004\377\001\x84\004\377Seconds:\001\xc7\004\377%.2u\001\xcf\004\377%c",time[local-1], 127);
-							lcd_buff_full=1;
-						}
-						break;
-					}
-					keys = 0;
-				}
-				else
-				keys=255;
+			case 2://MINUS
+			{
+			switch(local-1)
+			{
+			case 0:
+			{
+			if(time[local-1]>0)
+			time[local-1]--;
+			else
+			time[local-1]=23;
 			}
+			break;
+			case 1:
+			case 2:
+			{
+			if(time[local-1]>0)
+			time[local-1]--;
+			else
+			time[local-1]=59;
+			}
+			break;
+			}
+			}
+			break;
+
+			case 4://PLUS
+			time[local-1]++;
+			break;
+
+			case 8://Enter
+			if(local<3)
+			local++;
+			else
+			local=1;
+			break;
+			}
+			
+			//wykonanie sie TYLKO podczas przycisniecia, nie ma potrzeby odswiezania
+			//co chwile
+			if(local!=0)
+			{
+			sprintf(lcd_buff,"\001\x01\004\xff");
+			switch(local-1)
+			{
+			case 0: //godziny
+			{
+			time[local-1] %= 24;
+			if(time[local-1] < 12)
+			sprintf(lcd_buff,"\001\x01\004\xff\001\x0c\004\377\001\x83\004\377Hour (AM):\001\xc7\004\377%.2u\001\xcf\004\377%c",time[local-1], 127);
+			else
+			sprintf(lcd_buff,"\001\x01\004\xff\001\x0c\004\377\001\x83\004\377Hour (PM):\001\xc7\004\377%.2u\001\xcf\004\377%c",time[local-1], 127);
+			
+			lcd_buff_full=1;
+			}
+			break;
+			
+			case 1: //minuty
+			{
+			time[local-1] %= 60;
+			sprintf(lcd_buff,"\001\x01\004\xff\001\x0c\004\377\001\x84\004\377Minutes:\001\xc7\004\377%.2u\001\xcf\004\377%c",time[local-1], 127);
+			lcd_buff_full=1;
+			}
+			break;
+			
+			case 2: //sekundy
+			{
+			time[local-1] %= 60;
+			sprintf(lcd_buff,"\001\x01\004\xff\001\x0c\004\377\001\x84\004\377Seconds:\001\xc7\004\377%.2u\001\xcf\004\377%c",time[local-1], 127);
+			lcd_buff_full=1;
+			}
+			break;
+			}
+			keys = 0;
+			}
+			else
+			keys=255;
+			}*/
 		}
 		break;
 		
 		//wyświetlanie zegara co 1 s
 		case 2:
 		{
-			if(time[2] == 60)
-			time[1]++;
-			if(time[1]==60)
-			time[0]++;
+			time.seconds = I2C_get_value(REG_SECONDS, NACK);
+			time.minutes = I2C_get_value(REG_MINUTES, NACK);
+			time.hours = I2C_get_value(REG_HOURS, NACK);
 			
-			time[2] %= 60;
-			time[1] %= 60;
-			time[0] %= 24;
+			date.day_week = I2C_get_value(REG_DAY_OF_THE_WEEK, NACK);
+			date.day_month = I2C_get_value(REG_DAY_OF_THE_MONTH, NACK);
+			date.month = I2C_get_value(REG_MONTH, NACK);
+			date.year = I2C_get_value(REG_YEAR, ACK);
 			
-			//brak migania przez nadpisywanie
-			sprintf(lcd_buff,"\001\x80\004\xff\001\x0c\004\377\001\x81\004\377%s\001\xc3\004\377 %.2u:%.2u:%.2u\001\xcf\004\377%c",txt2, time[0], time[1], time[2], 126);
+			char day_name[4];
+			switch(date.day_week)
+			{
+				case 1: {strcpy(day_name,"Mon");} break;
+				case 2: {strcpy(day_name,"Tue");} break;
+				case 3: {strcpy(day_name,"Wed");} break;
+				case 4: {strcpy(day_name,"Thu");} break;
+				case 5: {strcpy(day_name,"Fri");} break;
+				case 6: {strcpy(day_name,"Sat");} break;
+				case 7: {strcpy(day_name,"Sun");} break;
+			}
+			sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+2000);
 			lcd_buff_full=1;
 		}
 		break;
 	}
 }
-
 void func_menu12(char c)
 {
 	local = 0;
 }
-
 void func_menu1311(char c)
 {
 	local = 0;
 }
-
 void func_menu1312(char c) //metronome
 {
 	static uint16_t config[2]={100,100};
@@ -404,16 +420,7 @@ void func_menu23(char c) //distance
 				if(local)
 				{
 					toggle_distance = (toggle_distance + 1) % 2;
-					if(toggle_distance)
-					{
-						PORTA |= (1<<PA1);
-						for(uint8_t i = 100; i>0; i--) //80 -> 10 us, ~100 us for certainty
-						asm volatile ("nop");
-						PORTA &= ~(1<<PA1);
-						//uint8_t temp = time[2]; - another way to make delay ~1 is
-						//while(temp == time[2])
-					}
-					else
+					if(toggle_distance==0)
 					{
 						distance = 0;
 					}
@@ -454,18 +461,25 @@ void func_menu23(char c) //distance
 				From x = 18 to x = 61
 				B (y-intercept) = 0,472070075080443 +/- 0,432052891875861
 				A (slope) = 1,6910207365034 +/- 0,0112965138865972 */
-				temp = distance*1.69f+0.47f;
+				
+				PORTA |= (1<<PA1); //send high state
+				for(uint8_t i = 100; i>0; i--) //80 -> 10 us, ~100 us for certainty
+				asm volatile ("nop");
+				PORTA &= ~(1<<PA1); //and afer ~100 us
+				
+				temp = distance*1.69f+0.47f; //show on lcd distance
 				integer = (int) temp; //conversion from float to int
 				temp = (temp - integer) * 100.0f;
 				fractional = (int) temp;
 				sprintf(lcd_buff,"\001\x80\004\377%s (cm)\001\xc0\004\377%.3d.%.2d (%s)     ",txt12, integer, fractional, on);
 				lcd_buff_full=1;
+				
+				distance=0; //for new measurement
 			}
 		}
 		break;
 	}
 }
-
 void func_menu31(char c) //Stepper motor
 {
 	typedef struct motor_data
@@ -552,10 +566,7 @@ void func_menu31(char c) //Stepper motor
 
 					case 8://Enter
 					{
-						if(local<3)
-						local++;
-						else
-						local=1;
+						local = (local+1)%4;
 						keys=0;
 					}
 					break;
@@ -663,4 +674,3 @@ void func_menu31(char c) //Stepper motor
 		break;
 	}
 }
-

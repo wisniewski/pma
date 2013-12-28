@@ -4,21 +4,19 @@ Menu oparte na strukturach
 Poczatek implementacji funkcji lokalnych do glownego menu
 */
 
-#include <avr/io.h> //I/O, rejestry itd.
-#include <avr/pgmspace.h> //progmem
+#include <avr/io.h>
+#include <avr/pgmspace.h> //PROGMEM
 #include <stdlib.h> //malloc
 #include <stdio.h> //sprintf
-#include <avr/interrupt.h> //przerwania
-#include <stdint.h>
+#include <avr/interrupt.h>
 #include <stdbool.h>
 #include "local.h"
 #include "lcd.h"
 #include "buttons.h"
+#include "i2c.h"
 
-/* global variables */
-uint8_t volatile keys; //buttons
-uint8_t volatile local; //local functions
-uint8_t volatile lcd_buff_full; //write from buffer to lcd
+/* global variables (interrupts etc.) */
+uint8_t volatile keys, local, lcd_buff_full;
 char *lcd_buff; //pointer to buffer
 volatile _Bool run_function=false, lcd_start=false; //can we run function(2)?
 unsigned int time[3]={0,0,0}; //rtc
@@ -26,9 +24,8 @@ uint8_t first_time[3]={0};
 unsigned int measurement = 0; //adc
 unsigned int distance = 0; //HC-SR04 distance sensor
 
-const uint8_t PROGMEM moves[8]={1, 3, 2, 6, 4, 12, 8, 9};
+const uint8_t PROGMEM moves[8]={1, 3, 2, 6, 4, 12, 8, 9}; //stepper motor
 
-//struktura menu // <-------- --------- ------- M E N U
 struct menu
 {
 	struct menu *left;
@@ -46,13 +43,13 @@ struct menu *current_menu;
 
 //menu 1 - real time clock, stopwatch, count down
 const char txt1[] = "Clock/Timers";
-const char txt2[] = "Real Time Clock";
+const char txt2[] = "RTC";
 const char txt3[] = "Stop Watch";
 const char txt4[] = "Count Down";
 const char txt5[] = "Egg Timer";
 const char txt6[] = "Metronome";
 //menu 2 - voltmeter, thermometer
-const char txt7[] = "Voltmeter\001\xc0\004\377Thermometer";
+const char txt7[] = "Voltage/Temp    \001\xc0\004\377Distance";
 const char txt8[] = "Voltmeter";
 const char txt9[] = "Thermometer";
 //menu 3 - motor
@@ -60,9 +57,8 @@ const char txt10[] = "Stepper Motor   ";
 const char txt11[] = "SM Config";
 const char txt12[] = "Distance";
 
-//definicja odwoluje sie do innych elementow {lewo, prawo, gora nic, dol, "string"}
 struct menu M1 = {&M3, &M2, NULL, &M11, txt1, NULL, 0, 126};
-struct menu M11 = {&M13, &M12, &M1, NULL, txt2, &func_menu11, 100, 126};
+struct menu M11 = {&M13, &M12, &M1, NULL, txt2, &func_menu11, 10000, 126};
 struct menu M12 = {&M11, &M13, &M1, NULL, txt3, &func_menu12, 0, 127};
 struct menu M13 = {&M12, &M11, &M1, &M131, txt4, NULL, 0, 127};
 struct menu M131 = {&M132, &M132, &M13, NULL, txt5, &func_menu1311, 0, 127};
@@ -76,54 +72,10 @@ struct menu M23 = {&M22, &M21, &M2, NULL, txt12, &func_menu23, 1000, 127};
 struct menu M3 = {&M2, &M1, NULL, &M31, txt10, NULL, 0, 126};
 struct menu M31 = {NULL, NULL, &M3, NULL, txt11, &func_menu31, 10, 127};
 
-//wait \004\377
-//command \001\x28
-const char lcd_init[] PROGMEM = 
-"\004\377\001\x28\004\377\001\x28\004\377\001\x28\004\377\
-\001\x0c\004\377\001\x06\004\377\001\x01\004\377";
+// -- wait \004\377 -- command \001\x28 --
+const char lcd_init[] PROGMEM = "\004\377\001\x28\004\377\001\x28\004\377\001\x28\004\377\001\x0c\004\377\001\x06\004\377\001\x01\004\377";
 
-ISR(TIMER0_COMP_vect) //10 k Hz = 100 us
-{
-	uint16_t static period_cnt, period_clock=10000;
-	
-	if(PINA & _BV(PA0)) //distance sensor
-	distance++;
-
-	if(period_clock == 0) //rtc
-	{
-		time[2]++;
-		lcd_start=true;
-		period_clock=10000;
-	}
-	else if(period_clock> 0)
-	period_clock--;
-
-	buttons_debouncing();
-	lcd_show();
-
-	if(current_menu -> period != 0) //do function(2) with specified period (time)
-	{
-		if(period_cnt == 0)
-		{
-			period_cnt = current_menu -> period;
-			
-			if((local == 0) && ((current_menu -> function) != NULL))
-			{
-				//(*((*current_menu).function))(2); - too long to handle in ISR!
-				run_function = true; //do it in main()
-			}
-		}
-		else if(period_cnt > 0)
-		period_cnt--;
-	}
-}
-
-ISR(ADC_vect)
-{
-	measurement = ADC;
-}
-
-int main (void) // <-------- -------- -------- -------- ----- M A I N
+int main (void)
 {
 	//Timer0, CTC mode, 10kHz
 	TCCR0 |= _BV(CS01) | (1 << WGM01);
@@ -136,7 +88,7 @@ int main (void) // <-------- -------- -------- -------- ----- M A I N
 	
 	//distance sensor conf
 	DDRA = (1<<PA1);
-	PORTA = 0x00;
+	PORTA &= ~(1<<PA0) | ~(1<<PA1);
 	
 	//deklaracja przyciskow i polaryzacja
 	hardware_keys_port = 0xf; //f lub 15 - bo tylko robie pull up na 4 bitach!
@@ -148,7 +100,18 @@ int main (void) // <-------- -------- -------- -------- ----- M A I N
 	lcd_data_dir = 0xf;
 	
 	//stepper conf
-	PORTD |= 0xff;
+	DDRD |= 0xf;
+	
+	I2C_initiation();
+	
+	I2C_write_value(REG_SECONDS, 55);
+	I2C_write_value(REG_MINUTES, 59);
+	I2C_write_value(REG_HOURS, 23);
+	
+	I2C_write_value(REG_DAY_OF_THE_WEEK, 4);
+	I2C_write_value(REG_DAY_OF_THE_MONTH, 31);
+	I2C_write_value(REG_MONTH, 12);
+	I2C_write_value(REG_YEAR, 13);
 	
 	//wyswietlanie napisu na lcd
 	lcd_buff = malloc(80);
@@ -227,4 +190,45 @@ int main (void) // <-------- -------- -------- -------- ----- M A I N
 		
 	}
 	return 0;
+}
+
+ISR(TIMER0_COMP_vect) //10 k Hz = 100 us
+{
+	uint16_t static period_cnt, period_clock=10000;
+	
+	if(PINA & _BV(PA0)) //distance sensor
+	distance++;
+
+	if(period_clock == 0) //rtc
+	{
+		time[2]++;
+		lcd_start=true;
+		period_clock=10000;
+	}
+	else if(period_clock> 0)
+	period_clock--;
+
+	buttons_debouncing();
+	lcd_show();
+
+	if(current_menu -> period != 0) //do function(2) with specified period (time)
+	{
+		if(period_cnt == 0)
+		{
+			period_cnt = current_menu -> period;
+			
+			if((local == 0) && ((current_menu -> function) != NULL))
+			{
+				//(*((*current_menu).function))(2); - too long to handle in ISR!
+				run_function = true; //so, do it in main()
+			}
+		}
+		else if(period_cnt > 0)
+		period_cnt--;
+	}
+}
+
+ISR(ADC_vect)
+{
+	measurement = ADC;
 }

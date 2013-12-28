@@ -1,12 +1,21 @@
 ﻿#ifndef LOCAL_H
 #define LOCAL_H
 
+#include <stdio.h> //sprintf
+#include <stdlib.h> //malloc
+#include <avr/io.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include "lcd.h"
+#include <avr/pgmspace.h>
+#include "i2c.h"
+#include <string.h>
+
 extern uint8_t volatile keys; //ktory przycisk nacisniety?
 extern uint8_t volatile local;
 extern uint8_t volatile lcd_buff_full;
 extern char *lcd_buff;
 extern volatile _Bool run_function;
-extern unsigned int time[3];
 extern unsigned int measurement;
 extern uint8_t first_time[3];
 extern unsigned int distance;
