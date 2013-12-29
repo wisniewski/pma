@@ -1,7 +1,4 @@
-﻿#include <avr/pgmspace.h> //progmem
-#include <stdlib.h> //malloc
-#include <stdio.h> //sprintf
-#include "lcd.h"
+﻿#include "lcd.h"
 
 void lcd_initiation (char data, char rs)
 {

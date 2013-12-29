@@ -20,9 +20,7 @@ uint8_t volatile keys, local, lcd_buff_full;
 char *lcd_buff; //pointer to buffer
 volatile _Bool run_function=false, lcd_start=false; //can we run function(2)?
 uint8_t first_time[3]={0};
-unsigned int measurement = 0; //adc
-unsigned int distance = 0; //HC-SR04 distance sensor
-uint32_t stoper_time=0;
+unsigned int volatile measurement = 0, distance = 0; //adc + HC-SR04 distance sensor
 
 const uint8_t PROGMEM moves[8]={1, 3, 2, 6, 4, 12, 8, 9}; //stepper motor
 
@@ -38,39 +36,31 @@ struct menu
 	char arrow;
 };
 
-struct menu M1, M2, M3, M11, M12, M13, M131, M132, M21, M22, M23, M31;
+struct menu M1, M2, M3, M11, M21, M22, M23, M31;
 struct menu *current_menu;
 
 //menu 1 - real time clock, stopwatch, count down
 const char txt1[] = "Clock/Timers    ";
 const char txt2[] = "RTC";
-const char txt3[] = "Stop Watch";
-const char txt4[] = "Count Down";
-const char txt5[] = "Egg Timer";
-const char txt6[] = "Metronome";
 //menu 2 - voltmeter, thermometer
-const char txt7[] = "Voltage/Temp    \001\xc0\004\377Distance";
-const char txt8[] = "Voltmeter";
-const char txt9[] = "Thermometer";
-//menu 3 - motor
-const char txt10[] = "Stepper Motor   ";
-const char txt11[] = "SM Config";
-const char txt12[] = "Distance";
+const char txt3[] = "Voltage/Temp    \001\xc0\004\377Distance";
+const char txt4[] = "Voltmeter";
+const char txt5[] = "Thermometer";
+//menu 3 - stepper motor
+const char txt6[] = "Stepper Motor   ";
+const char txt7[] = "SM Config";
+const char txt8[] = "Distance";
 
 struct menu M1 = {&M3, &M2, NULL, &M11, txt1, NULL, 0, 126};
-struct menu M11 = {&M13, &M12, &M1, NULL, txt2, &func_menu11, 7500, 126};
-struct menu M12 = {&M11, &M13, &M1, NULL, txt3, &func_menu12, 0, 127};
-struct menu M13 = {&M12, &M11, &M1, &M131, txt4, NULL, 0, 127};
-struct menu M131 = {&M132, &M132, &M13, NULL, txt5, &func_menu1311, 0, 127};
-struct menu M132 = {&M131, &M131, &M13, NULL, txt6, &func_menu1312, 1000, 127};
+struct menu M11 = {NULL, NULL, &M1, NULL, txt2, &func_menu11, 7500, 126};
 
-struct menu M2 = {&M1, &M3, NULL, &M21, txt7, NULL, 0, 126};
-struct menu M21 = {&M23, &M22, &M2, NULL, txt8, &func_menu21, 1000, 127};
-struct menu M22 = {&M21, &M23, &M2, NULL, txt9, &func_menu22, 1000, 127};
-struct menu M23 = {&M22, &M21, &M2, NULL, txt12, &func_menu23, 1000, 127};	
+struct menu M2 = {&M1, &M3, NULL, &M21, txt3, NULL, 0, 126};
+struct menu M21 = {&M23, &M22, &M2, NULL, txt4, &func_menu21, 1000, 127};
+struct menu M22 = {&M21, &M23, &M2, NULL, txt5, &func_menu22, 1000, 127};
+struct menu M23 = {&M22, &M21, &M2, NULL, txt8, &func_menu23, 1000, 127};	
 
-struct menu M3 = {&M2, &M1, NULL, &M31, txt10, NULL, 0, 126};
-struct menu M31 = {NULL, NULL, &M3, NULL, txt11, &func_menu31, 10, 127};
+struct menu M3 = {&M2, &M1, NULL, &M31, txt6, NULL, 0, 126};
+struct menu M31 = {NULL, NULL, &M3, NULL, txt7, &func_menu31, 10, 127};
 
 // -- wait \004\377 -- command \001\x28 --
 const char lcd_init[] PROGMEM = "\004\377\001\x28\004\377\001\x28\004\377\001\x28\004\377\001\x0c\004\377\001\x06\004\377\001\x01\004\377";

@@ -33,9 +33,9 @@ extern uint8_t volatile local;
 extern uint8_t volatile lcd_buff_full;
 extern char *lcd_buff;
 extern volatile _Bool run_function;
-extern unsigned int measurement;
+extern unsigned int volatile measurement;
 extern uint8_t first_time[3];
-extern unsigned int distance;
+extern unsigned int volatile distance;
 
 extern const uint8_t moves[8];
 
@@ -54,9 +54,6 @@ extern const char txt12[];
 
 //deklaracje funkcji lokalnych
 void func_menu11(char c);
-void func_menu12(char c);
-void func_menu1311(char c);
-void func_menu1312(char c);
 void func_menu21(char c);
 void func_menu22(char c);
 void func_menu23(char c);

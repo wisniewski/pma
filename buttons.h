@@ -1,6 +1,8 @@
 ﻿#ifndef BUTTONS_H
 #define BUTTONS_H
 
+#include <avr/io.h>
+
 extern uint8_t volatile keys; //ktory przycisk nacisniety?
 
 //pole bitowe do przechowywania stanow przyciskow

@@ -1,6 +1,10 @@
 ﻿#ifndef LCD_H
 #define LCD_H
 
+#include <avr/pgmspace.h> //progmem
+#include <stdlib.h> //malloc
+#include <stdio.h> //sprintf
+
 extern uint8_t volatile lcd_buff_full;
 extern char *lcd_buff;
 

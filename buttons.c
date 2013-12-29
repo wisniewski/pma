@@ -1,6 +1,4 @@
-﻿#include <avr/io.h>
-#include <stdint.h>
-#include "buttons.h"
+﻿#include "buttons.h"
 
 void buttons_debouncing(void)
 {

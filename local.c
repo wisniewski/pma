@@ -1,19 +1,6 @@
 ﻿#include "local.h"
 
-void sound(uint16_t duration[])
-{
-	volatile int i;
-	while(*duration--)
-	{
-		for(i = *(duration+1) ; i > 0; i--);
-		PORTD ^= (1 << PD3);
-	}
-}
-
-
-
-
-void func_menu11(char c) //Zegar czasu rzeczywistego - RTC
+void func_menu11(char c) //Real Time Clock RTC
 {
 	char day_name[4];
 	static uint8_t send_time=0;
@@ -266,113 +253,38 @@ void func_menu11(char c) //Zegar czasu rzeczywistego - RTC
 					break;
 				}
 			}
-			}
-			break;
-			
-			//wyświetlanie zegara co 1 s
-			case 2:
-			{
-				time.seconds = I2C_get_value(REG_SECONDS, NACK);
-				time.minutes = I2C_get_value(REG_MINUTES, NACK);
-				time.hours = I2C_get_value(REG_HOURS, NACK);
-				
-				date.day_week = I2C_get_value(REG_DAY_OF_THE_WEEK, NACK);
-				date.day_month = I2C_get_value(REG_DAY_OF_THE_MONTH, NACK);
-				date.month = I2C_get_value(REG_MONTH, NACK);
-				date.year = I2C_get_value(REG_YEAR, ACK);
-				
-				switch(date.day_week)
-				{
-					case 1: {strcpy(day_name,"Mon");} break;
-					case 2: {strcpy(day_name,"Tue");} break;
-					case 3: {strcpy(day_name,"Wed");} break;
-					case 4: {strcpy(day_name,"Thu");} break;
-					case 5: {strcpy(day_name,"Fri");} break;
-					case 6: {strcpy(day_name,"Sat");} break;
-					case 7: {strcpy(day_name,"Sun");} break;
-				}
-				
-				sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d ",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+2000);
-				lcd_buff_full=1;
-			}
-			break;
-		
-	}
-}
-void func_menu12(char c)
-{
-	local = 0;
-}
-void func_menu1311(char c)
-{
-	local = 0;
-}
-void func_menu1312(char c) //metronome
-{
-	static uint16_t config[2]={100,100};
-	switch(c)
-	{
-		case 1:
-		{
-			
-			
-			if(keys!=0)
-			{
-				switch(keys)
-				{
-					case 1: //Escape
-					local--;
-					break;
-
-					case 2://MINUS
-					config[local-1]--;
-					break;
-
-					case 4://PLUS
-					config[local-1]++;
-					break;
-
-					case 8://Enter
-					if(local<2)
-					local++;
-					else
-					local=1;
-					break;
-				}
-				
-				//wykonanie sie TYLKO podczas przycisniecia, nie ma potrzeby odswiezania
-				//co chwile
-				if(local!=0)
-				{
-					switch(local-1)
-					{
-						case 0:
-						{
-							sprintf(lcd_buff, "\001\x01\004\377Duration");
-							lcd_buff_full=1;
-						}
-						break;
-						case 1:
-						{
-							sprintf(lcd_buff, "\001\x01\004\377pulse");
-							lcd_buff_full=1;
-						}
-						break;
-					}
-				}
-			}
-			break;
-			
-			//wyświetlanie zegara co 1 s
-			case 2:
-			{
-				sound(config);
-			}
-			break;
 		}
+		break;
+		
+		//wyświetlanie zegara co 1 s
+		case 2:
+		{
+			time.seconds = I2C_get_value(REG_SECONDS, NACK);
+			time.minutes = I2C_get_value(REG_MINUTES, NACK);
+			time.hours = I2C_get_value(REG_HOURS, NACK);
+			
+			date.day_week = I2C_get_value(REG_DAY_OF_THE_WEEK, NACK);
+			date.day_month = I2C_get_value(REG_DAY_OF_THE_MONTH, NACK);
+			date.month = I2C_get_value(REG_MONTH, NACK);
+			date.year = I2C_get_value(REG_YEAR, ACK);
+			
+			switch(date.day_week)
+			{
+				case 1: {strcpy(day_name,"Mon");} break;
+				case 2: {strcpy(day_name,"Tue");} break;
+				case 3: {strcpy(day_name,"Wed");} break;
+				case 4: {strcpy(day_name,"Thu");} break;
+				case 5: {strcpy(day_name,"Fri");} break;
+				case 6: {strcpy(day_name,"Sat");} break;
+				case 7: {strcpy(day_name,"Sun");} break;
+			}
+			
+			sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d ",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+2000);
+			lcd_buff_full=1;
+		}
+		break;
 		
 	}
-	
 }
 void func_menu21(char c) //voltmeter
 {
@@ -442,7 +354,7 @@ void func_menu21(char c) //voltmeter
 			{
 				integer = 0;
 				fractional = 0;
-				sprintf(lcd_buff,"\001\x80\004\377%s       \001\xc0\004\377%.2d.%.3d V (%s)  ",txt8,integer, fractional, off);
+				sprintf(lcd_buff,"\001\x80\004\377%s       \001\xc0\004\377%.2d.%.3d V (%s)  ",txt4,integer, fractional, off);
 				lcd_buff_full=1;
 			}
 			else
@@ -451,7 +363,7 @@ void func_menu21(char c) //voltmeter
 				integer = (int) temp; //konwersja z float na uint8_t
 				temp = (temp - integer) * 1000.0f;
 				fractional = (int) temp;
-				sprintf(lcd_buff,"\001\x80\004\377%s       \001\xc0\004\377%.2d.%.3d V (%s)   ",txt8,integer, fractional, on);
+				sprintf(lcd_buff,"\001\x80\004\377%s       \001\xc0\004\377%.2d.%.3d V (%s)   ",txt4,integer, fractional, on);
 				lcd_buff_full=1;
 			}
 			
@@ -525,7 +437,7 @@ void func_menu22(char c) //thermometer
 			{
 				integer=0;
 				fractional=0;
-				sprintf(lcd_buff,"\001\x80\004\377%s     \001\xc0\004\377%.2d.%.3d C (%s)  ",txt9, integer, fractional, off);
+				sprintf(lcd_buff,"\001\x80\004\377%s     \001\xc0\004\377%.2d.%.3d C (%s)  ",txt5, integer, fractional, off);
 				lcd_buff_full=1;
 			}
 			else
@@ -535,7 +447,7 @@ void func_menu22(char c) //thermometer
 				integer = (int) temp; //conversion from float to uint8_t
 				temp = (temp - integer) * 100.0f;
 				fractional = (int) temp;
-				sprintf(lcd_buff,"\001\x80\004\377%s     \001\xc0\004\377%.2d.%.3d C (%s)   ",txt9, integer, fractional, on);
+				sprintf(lcd_buff,"\001\x80\004\377%s     \001\xc0\004\377%.2d.%.3d C (%s)   ",txt5, integer, fractional, on);
 				lcd_buff_full=1;
 			}
 			
@@ -595,7 +507,7 @@ void func_menu23(char c) //distance
 			{
 				integer=0;
 				fractional=0;
-				sprintf(lcd_buff,"\001\x80\004\377%s (cm)\001\xc0\004\377%.3d.%.3d (%s)   ",txt12, integer, fractional, off);
+				sprintf(lcd_buff,"\001\x80\004\377%s (cm)\001\xc0\004\377%.3d.%.3d (%s)   ",txt8, integer, fractional, off);
 				lcd_buff_full=1;
 			}
 			else
@@ -617,7 +529,7 @@ void func_menu23(char c) //distance
 				integer = (int) temp; //conversion from float to int
 				temp = (temp - integer) * 100.0f;
 				fractional = (int) temp;
-				sprintf(lcd_buff,"\001\x80\004\377%s (cm)\001\xc0\004\377%.3d.%.2d (%s)     ",txt12, integer, fractional, on);
+				sprintf(lcd_buff,"\001\x80\004\377%s (cm)\001\xc0\004\377%.3d.%.2d (%s)     ",txt8, integer, fractional, on);
 				lcd_buff_full=1;
 				
 				distance=0; //for new measurement
@@ -782,7 +694,7 @@ void func_menu31(char c) //Stepper motor
 			if(motor.temporary_steps==0)
 			{
 				PORTD = 0x00;
-				sprintf(lcd_buff,"\001\x80\004\377%s: Off  ",txt11);
+				sprintf(lcd_buff,"\001\x80\004\377%s: Off  ",txt7);
 				lcd_buff_full=1;
 			}
 			else
@@ -809,7 +721,7 @@ void func_menu31(char c) //Stepper motor
 					else
 					i=(i+7)%8;
 					
-					sprintf(lcd_buff,"\001\x80\004\377%s: On   ",txt11);
+					sprintf(lcd_buff,"\001\x80\004\377%s: On   ",txt7);
 					lcd_buff_full=1;
 				}
 				else if(motor.temporary_slowdown>0)
