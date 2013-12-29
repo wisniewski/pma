@@ -19,10 +19,10 @@ Poczatek implementacji funkcji lokalnych do glownego menu
 uint8_t volatile keys, local, lcd_buff_full;
 char *lcd_buff; //pointer to buffer
 volatile _Bool run_function=false, lcd_start=false; //can we run function(2)?
-unsigned int time[3]={0,0,0}; //rtc
 uint8_t first_time[3]={0};
 unsigned int measurement = 0; //adc
 unsigned int distance = 0; //HC-SR04 distance sensor
+uint32_t stoper_time=0;
 
 const uint8_t PROGMEM moves[8]={1, 3, 2, 6, 4, 12, 8, 9}; //stepper motor
 
@@ -42,7 +42,7 @@ struct menu M1, M2, M3, M11, M12, M13, M131, M132, M21, M22, M23, M31;
 struct menu *current_menu;
 
 //menu 1 - real time clock, stopwatch, count down
-const char txt1[] = "Clock/Timers";
+const char txt1[] = "Clock/Timers    ";
 const char txt2[] = "RTC";
 const char txt3[] = "Stop Watch";
 const char txt4[] = "Count Down";
@@ -58,7 +58,7 @@ const char txt11[] = "SM Config";
 const char txt12[] = "Distance";
 
 struct menu M1 = {&M3, &M2, NULL, &M11, txt1, NULL, 0, 126};
-struct menu M11 = {&M13, &M12, &M1, NULL, txt2, &func_menu11, 10000, 126};
+struct menu M11 = {&M13, &M12, &M1, NULL, txt2, &func_menu11, 7500, 126};
 struct menu M12 = {&M11, &M13, &M1, NULL, txt3, &func_menu12, 0, 127};
 struct menu M13 = {&M12, &M11, &M1, &M131, txt4, NULL, 0, 127};
 struct menu M131 = {&M132, &M132, &M13, NULL, txt5, &func_menu1311, 0, 127};
@@ -102,17 +102,15 @@ int main (void)
 	//stepper conf
 	DDRD |= 0xf;
 	
-	I2C_initiation();
-	
-	I2C_write_value(REG_SECONDS, 55);
-	I2C_write_value(REG_MINUTES, 59);
-	I2C_write_value(REG_HOURS, 23);
-	
-	I2C_write_value(REG_DAY_OF_THE_WEEK, 4);
-	I2C_write_value(REG_DAY_OF_THE_MONTH, 31);
-	I2C_write_value(REG_MONTH, 12);
-	I2C_write_value(REG_YEAR, 13);
-	
+	I2C_initiation();	
+	time.seconds = I2C_get_value(REG_SECONDS, NACK);
+	time.minutes = I2C_get_value(REG_MINUTES, NACK);
+	time.hours = I2C_get_value(REG_HOURS, NACK);
+	date.day_week = I2C_get_value(REG_DAY_OF_THE_WEEK, NACK);
+	date.day_month = I2C_get_value(REG_DAY_OF_THE_MONTH, NACK);
+	date.month = I2C_get_value(REG_MONTH, NACK);
+	date.year = I2C_get_value(REG_YEAR, ACK);
+		
 	//wyswietlanie napisu na lcd
 	lcd_buff = malloc(80);
 	sprintf_P(lcd_buff, lcd_init);
@@ -186,24 +184,20 @@ int main (void)
 		{
 			(*((*current_menu).function))(1);
 		}
-		
-		
 	}
 	return 0;
 }
 
 ISR(TIMER0_COMP_vect) //10 k Hz = 100 us
 {
-	uint16_t static period_cnt, period_clock=10000;
+	uint16_t static period_cnt, period_clock=5000;
 	
 	if(PINA & _BV(PA0)) //distance sensor
 	distance++;
 
-	if(period_clock == 0) //rtc
+	if(period_clock == 0) //lcd start after 1s
 	{
-		time[2]++;
 		lcd_start=true;
-		period_clock=10000;
 	}
 	else if(period_clock> 0)
 	period_clock--;

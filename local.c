@@ -15,142 +15,288 @@ void sound(uint16_t duration[])
 
 void func_menu11(char c) //Zegar czasu rzeczywistego - RTC
 {
-	typedef struct rtc_time
+	char day_name[4];
+	static uint8_t send_time=0;
+	switch(date.day_week)
 	{
-		uint8_t seconds;
-		uint8_t minutes;
-		uint8_t hours;
-	} rtc;
-	rtc time;
+		case 1: {strcpy(day_name,"Mon");} break;
+		case 2: {strcpy(day_name,"Tue");} break;
+		case 3: {strcpy(day_name,"Wed");} break;
+		case 4: {strcpy(day_name,"Thu");} break;
+		case 5: {strcpy(day_name,"Fri");} break;
+		case 6: {strcpy(day_name,"Sat");} break;
+		case 7: {strcpy(day_name,"Sun");} break;
+	}
 	
-	typedef struct rtc_date
+	if(send_time)
 	{
-		uint8_t day_week;
-		uint8_t day_month;
-		uint8_t month;
-		uint8_t year;
-	} rtc2;
-	rtc2 date;
+		I2C_write_value(REG_SECONDS, time.seconds);
+		I2C_write_value(REG_MINUTES, time.minutes);
+		I2C_write_value(REG_HOURS, time.hours);
+		
+		I2C_write_value(REG_DAY_OF_THE_WEEK, date.day_week);
+		I2C_write_value(REG_DAY_OF_THE_MONTH, date.day_month);
+		I2C_write_value(REG_MONTH, date.month);
+		I2C_write_value(REG_YEAR, date.year);
+		send_time = 0;
+	}
 	
 	switch(c)
 	{
 		case 1:
 		{
-			/*if(keys!=0)
+			if(keys!=0)
 			{
-			switch(keys)
-			{
-			case 1: //Escape
-			local--;
-			break;
+				switch(keys)
+				{
+					case 1: //Escape
+					{
+						local--;
+						if(local==0)
+						send_time=1;
+						keys=0;
+					}
+					break;
 
-			case 2://MINUS
+					case 2://MINUS
+					{
+						switch(local)
+						{
+							case 1:
+							{
+								time.hours = (time.hours + 23) % 24;
+								keys=0;
+							}
+							break;
+							case 2:
+							{
+								time.minutes = (time.minutes+58)%59;
+								keys=0;
+							}
+							case 3:
+							{
+								time.seconds = (time.seconds+58)%59;
+								keys=0;
+							}
+							break;
+							
+							case 4:
+							{
+								if(date.day_week > 1)
+								date.day_week--;
+								else
+								date.day_week=7;
+
+								keys=0;
+							}
+							break;
+							
+							case 5:
+							{
+								if(date.day_month > 1)
+								date.day_month--;
+								else
+								date.day_month=31;
+
+								keys=0;
+							}
+							break;
+							
+							case 6:
+							{
+								if(date.month > 1)
+								date.month--;
+								else
+								date.month=12;
+
+								keys=0;
+							}
+							break;
+							
+							case 7:
+							{
+								date.year = (date.year+99)%100;
+								keys=0;
+							}
+							break;
+						}
+					}
+					break;
+
+					case 4://PLUS
+					{
+						switch(local)
+						{
+							case 1:
+							{
+								time.hours = (time.hours + 1) % 24;
+								I2C_write_value(REG_HOURS, time.hours);
+								keys=0;
+								
+							}
+							break;
+							case 2:
+							{
+								time.minutes = (time.minutes+1)%59;
+								I2C_write_value(REG_MINUTES, time.minutes);
+								keys=0;
+							}
+							case 3:
+							{
+								time.seconds = (time.seconds+1)%59;
+								keys=0;
+							}
+							break;
+							
+							case 4:
+							{
+								if(date.day_week < 7)
+								date.day_week++;
+								else
+								date.day_week=1;
+								
+								keys=0;
+							}
+							break;
+							
+							case 5:
+							{
+								if(date.day_month < 31)
+								date.day_month++;
+								else
+								date.day_month=1;
+
+								keys=0;
+							}
+							break;
+							
+							case 6:
+							{
+								if(date.month < 12)
+								date.month++;
+								else
+								date.month=1;
+
+								keys=0;
+							}
+							break;
+							
+							case 7:
+							{
+								date.year = (date.year+1)%100;
+								keys=0;
+							}
+							break;
+						}
+					}
+					break;
+
+					case 8://Enter
+					{
+						local = (local+1) % 8;
+						if(local==0)
+						send_time=1;
+						keys=0;
+					}
+					break;
+				}
+			}
+			
+			if(local)
 			{
-			switch(local-1)
-			{
-			case 0:
-			{
-			if(time[local-1]>0)
-			time[local-1]--;
-			else
-			time[local-1]=23;
+				switch(local)
+				{
+					case 1: //slowdown
+					{
+						sprintf(lcd_buff,"\001\x80\004\xff%s:%c%.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d",txt2, 126, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+2000);
+						lcd_buff_full=1;
+					}
+					break;
+					
+					case 2: //direction
+					{
+						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d%c%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d",txt2, time.hours, 126, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+2000);
+						lcd_buff_full=1;
+					}
+					break;
+					
+					case 3: //steps
+					{
+						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d%c%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d",txt2, time.hours, time.minutes, 126, time.seconds, day_name, date.day_month, date.month, date.year+2000);
+						lcd_buff_full=1;
+					}
+					break;
+					
+					case 4:
+					{
+						switch(date.day_week)
+						{
+							case 1: {strcpy(day_name,"Mon");} break;
+							case 2: {strcpy(day_name,"Tue");} break;
+							case 3: {strcpy(day_name,"Wed");} break;
+							case 4: {strcpy(day_name,"Thu");} break;
+							case 5: {strcpy(day_name,"Fri");} break;
+							case 6: {strcpy(day_name,"Sat");} break;
+							case 7: {strcpy(day_name,"Sun");} break;
+						}
+						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s%c%.2d.%.2d.%.4d",txt2, time.hours, time.minutes, time.seconds, day_name, 127, date.day_month, date.month, date.year+2000);
+						lcd_buff_full=1;
+					}
+					break;
+					
+					case 5:
+					{
+						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d%c%.2d.%.4d",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, 127, date.month, date.year+2000);
+						lcd_buff_full=1;
+					}
+					break;
+					
+					case 6:
+					{
+						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d%c%.4d",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, 127, date.year+2000);
+						lcd_buff_full=1;
+					}
+					break;
+					
+					case 7:
+					{
+						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d%c",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+2000, 127);
+						lcd_buff_full=1;
+					}
+					break;
+				}
+			}
 			}
 			break;
-			case 1:
+			
+			//wyświetlanie zegara co 1 s
 			case 2:
 			{
-			if(time[local-1]>0)
-			time[local-1]--;
-			else
-			time[local-1]=59;
+				time.seconds = I2C_get_value(REG_SECONDS, NACK);
+				time.minutes = I2C_get_value(REG_MINUTES, NACK);
+				time.hours = I2C_get_value(REG_HOURS, NACK);
+				
+				date.day_week = I2C_get_value(REG_DAY_OF_THE_WEEK, NACK);
+				date.day_month = I2C_get_value(REG_DAY_OF_THE_MONTH, NACK);
+				date.month = I2C_get_value(REG_MONTH, NACK);
+				date.year = I2C_get_value(REG_YEAR, ACK);
+				
+				switch(date.day_week)
+				{
+					case 1: {strcpy(day_name,"Mon");} break;
+					case 2: {strcpy(day_name,"Tue");} break;
+					case 3: {strcpy(day_name,"Wed");} break;
+					case 4: {strcpy(day_name,"Thu");} break;
+					case 5: {strcpy(day_name,"Fri");} break;
+					case 6: {strcpy(day_name,"Sat");} break;
+					case 7: {strcpy(day_name,"Sun");} break;
+				}
+				
+				sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d ",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+2000);
+				lcd_buff_full=1;
 			}
 			break;
-			}
-			}
-			break;
-
-			case 4://PLUS
-			time[local-1]++;
-			break;
-
-			case 8://Enter
-			if(local<3)
-			local++;
-			else
-			local=1;
-			break;
-			}
-			
-			//wykonanie sie TYLKO podczas przycisniecia, nie ma potrzeby odswiezania
-			//co chwile
-			if(local!=0)
-			{
-			sprintf(lcd_buff,"\001\x01\004\xff");
-			switch(local-1)
-			{
-			case 0: //godziny
-			{
-			time[local-1] %= 24;
-			if(time[local-1] < 12)
-			sprintf(lcd_buff,"\001\x01\004\xff\001\x0c\004\377\001\x83\004\377Hour (AM):\001\xc7\004\377%.2u\001\xcf\004\377%c",time[local-1], 127);
-			else
-			sprintf(lcd_buff,"\001\x01\004\xff\001\x0c\004\377\001\x83\004\377Hour (PM):\001\xc7\004\377%.2u\001\xcf\004\377%c",time[local-1], 127);
-			
-			lcd_buff_full=1;
-			}
-			break;
-			
-			case 1: //minuty
-			{
-			time[local-1] %= 60;
-			sprintf(lcd_buff,"\001\x01\004\xff\001\x0c\004\377\001\x84\004\377Minutes:\001\xc7\004\377%.2u\001\xcf\004\377%c",time[local-1], 127);
-			lcd_buff_full=1;
-			}
-			break;
-			
-			case 2: //sekundy
-			{
-			time[local-1] %= 60;
-			sprintf(lcd_buff,"\001\x01\004\xff\001\x0c\004\377\001\x84\004\377Seconds:\001\xc7\004\377%.2u\001\xcf\004\377%c",time[local-1], 127);
-			lcd_buff_full=1;
-			}
-			break;
-			}
-			keys = 0;
-			}
-			else
-			keys=255;
-			}*/
-		}
-		break;
 		
-		//wyświetlanie zegara co 1 s
-		case 2:
-		{
-			time.seconds = I2C_get_value(REG_SECONDS, NACK);
-			time.minutes = I2C_get_value(REG_MINUTES, NACK);
-			time.hours = I2C_get_value(REG_HOURS, NACK);
-			
-			date.day_week = I2C_get_value(REG_DAY_OF_THE_WEEK, NACK);
-			date.day_month = I2C_get_value(REG_DAY_OF_THE_MONTH, NACK);
-			date.month = I2C_get_value(REG_MONTH, NACK);
-			date.year = I2C_get_value(REG_YEAR, ACK);
-			
-			char day_name[4];
-			switch(date.day_week)
-			{
-				case 1: {strcpy(day_name,"Mon");} break;
-				case 2: {strcpy(day_name,"Tue");} break;
-				case 3: {strcpy(day_name,"Wed");} break;
-				case 4: {strcpy(day_name,"Thu");} break;
-				case 5: {strcpy(day_name,"Fri");} break;
-				case 6: {strcpy(day_name,"Sat");} break;
-				case 7: {strcpy(day_name,"Sun");} break;
-			}
-			sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+2000);
-			lcd_buff_full=1;
-		}
-		break;
 	}
 }
 void func_menu12(char c)
@@ -573,7 +719,6 @@ void func_menu31(char c) //Stepper motor
 				}
 			}
 			
-			//wykonanie sie TYLKO podczas przycisniecia, nie ma potrzeby odswiezania co chwile
 			if(local)
 			{
 				switch(local-1)
