@@ -10,7 +10,7 @@ void buttons_debouncing(void)
 			case 0:
 			{
 				tmp_key = hardware_keys;
-				if(tmp_key != 15) //15 bo zadeklarowalem CZTERY bity, a 15 = 0b1111, sprawdzam zadeklarowane bity
+				if(tmp_key != 15) //if is not 0xf
 				{
 					t = 1;
 					key_cnt = 200;
@@ -22,7 +22,7 @@ void buttons_debouncing(void)
 			{
 				if(hardware_keys == tmp_key)
 				{
-					keys = (~tmp_key)&0xf; //wyzerowanie 4 starszych bitow
+					keys = (~tmp_key)&0xf; //clear 4 MSB
 					t = 2;
 				}
 				else

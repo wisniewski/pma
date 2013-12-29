@@ -1,9 +1,9 @@
 ﻿#include "local.h"
 
-void func_menu11(char c) //Real Time Clock RTC
+void real_time_clock(char c) //Real Time Clock RTC
 {
 	char day_name[4];
-	static uint8_t send_time=0;
+	static uint8_t send_time=0, thousand=2;
 	switch(date.day_week)
 	{
 		case 1: {strcpy(day_name,"Mon");} break;
@@ -45,7 +45,7 @@ void func_menu11(char c) //Real Time Clock RTC
 					}
 					break;
 
-					case 2://MINUS
+					case 2: //minus
 					{
 						switch(local)
 						{
@@ -103,6 +103,8 @@ void func_menu11(char c) //Real Time Clock RTC
 							case 7:
 							{
 								date.year = (date.year+99)%100;
+								if(date.year == 0)
+								thousand = (thousand+9) % 10;
 								keys=0;
 							}
 							break;
@@ -110,7 +112,7 @@ void func_menu11(char c) //Real Time Clock RTC
 					}
 					break;
 
-					case 4://PLUS
+					case 4: //plus
 					{
 						switch(local)
 						{
@@ -171,6 +173,8 @@ void func_menu11(char c) //Real Time Clock RTC
 							case 7:
 							{
 								date.year = (date.year+1)%100;
+								if(date.year == 0)
+								thousand = (thousand+1) % 10;
 								keys=0;
 							}
 							break;
@@ -178,7 +182,7 @@ void func_menu11(char c) //Real Time Clock RTC
 					}
 					break;
 
-					case 8://Enter
+					case 8: //enter and next
 					{
 						local = (local+1) % 8;
 						if(local==0)
@@ -193,23 +197,23 @@ void func_menu11(char c) //Real Time Clock RTC
 			{
 				switch(local)
 				{
-					case 1: //slowdown
+					case 1:
 					{
-						sprintf(lcd_buff,"\001\x80\004\xff%s:%c%.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d",txt2, 126, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+2000);
+						sprintf(lcd_buff,"\001\x80\004\xff%s:%c%.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d",txt2, 126, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000));
 						lcd_buff_full=1;
 					}
 					break;
 					
-					case 2: //direction
+					case 2:
 					{
-						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d%c%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d",txt2, time.hours, 126, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+2000);
+						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d%c%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d",txt2, time.hours, 126, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000));
 						lcd_buff_full=1;
 					}
 					break;
 					
-					case 3: //steps
+					case 3:
 					{
-						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d%c%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d",txt2, time.hours, time.minutes, 126, time.seconds, day_name, date.day_month, date.month, date.year+2000);
+						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d%c%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d",txt2, time.hours, time.minutes, 126, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000));
 						lcd_buff_full=1;
 					}
 					break;
@@ -226,28 +230,28 @@ void func_menu11(char c) //Real Time Clock RTC
 							case 6: {strcpy(day_name,"Sat");} break;
 							case 7: {strcpy(day_name,"Sun");} break;
 						}
-						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s%c%.2d.%.2d.%.4d",txt2, time.hours, time.minutes, time.seconds, day_name, 127, date.day_month, date.month, date.year+2000);
+						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s%c%.2d.%.2d.%.4d",txt2, time.hours, time.minutes, time.seconds, day_name, 127, date.day_month, date.month, date.year+(thousand*1000));
 						lcd_buff_full=1;
 					}
 					break;
 					
 					case 5:
 					{
-						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d%c%.2d.%.4d",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, 127, date.month, date.year+2000);
+						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d%c%.2d.%.4d",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, 127, date.month, date.year+(thousand*1000));
 						lcd_buff_full=1;
 					}
 					break;
 					
 					case 6:
 					{
-						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d%c%.4d",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, 127, date.year+2000);
+						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d%c%.4d",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, 127, date.year+(thousand*1000));
 						lcd_buff_full=1;
 					}
 					break;
 					
 					case 7:
 					{
-						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d%c",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+2000, 127);
+						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d%c",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000), 127);
 						lcd_buff_full=1;
 					}
 					break;
@@ -256,7 +260,6 @@ void func_menu11(char c) //Real Time Clock RTC
 		}
 		break;
 		
-		//wyświetlanie zegara co 1 s
 		case 2:
 		{
 			time.seconds = I2C_get_value(REG_SECONDS, NACK);
@@ -279,14 +282,14 @@ void func_menu11(char c) //Real Time Clock RTC
 				case 7: {strcpy(day_name,"Sun");} break;
 			}
 			
-			sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d ",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+2000);
+			sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d ",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000));
 			lcd_buff_full=1;
 		}
 		break;
 		
 	}
 }
-void func_menu21(char c) //voltmeter
+void voltmeter(char c) //voltmeter
 {
 	switch(c)
 	{
@@ -360,7 +363,7 @@ void func_menu21(char c) //voltmeter
 			else
 			{
 				temp = measurement/204.6f;
-				integer = (int) temp; //konwersja z float na uint8_t
+				integer = (int) temp; //conversion from float to int
 				temp = (temp - integer) * 1000.0f;
 				fractional = (int) temp;
 				sprintf(lcd_buff,"\001\x80\004\377%s       \001\xc0\004\377%.2d.%.3d V (%s)   ",txt4,integer, fractional, on);
@@ -371,7 +374,7 @@ void func_menu21(char c) //voltmeter
 		break;
 	}
 }
-void func_menu22(char c) //thermometer
+void thermometer(char c) //thermometer
 {
 	switch(c)
 	{
@@ -455,7 +458,7 @@ void func_menu22(char c) //thermometer
 		break;
 	}
 }
-void func_menu23(char c) //distance
+void distance_sensor(char c) //distance
 {
 	switch(c)
 	{
@@ -538,7 +541,7 @@ void func_menu23(char c) //distance
 		break;
 	}
 }
-void func_menu31(char c) //Stepper motor
+void stepper_motor(char c) //Stepper motor
 {
 	typedef struct motor_data
 	{
