@@ -1,5 +1,5 @@
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-//							DOCUMENTATION
+// DOCUMENTATION
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 // AUTHOR: Mariusz Wiœniewski // www.mariuszbonifacy.pl
 // E-mail: mariusz.bonifacy@gmail.com
@@ -10,7 +10,7 @@
 // Atmel AVR (8 bit) GNU Toolchain: 3.4.2.939
 // GCC_VERSION: 4.7.2
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
-//				SETTINGS AND CONNECTIONS ON ZL15AVR
+// SETTINGS AND CONNECTIONS ON ZL15AVR
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
 // LCD character display (HD44780 compatible) in 4-bit mode:
 // RS -> PB0
@@ -39,7 +39,7 @@
 // 1N1 - 1N4 -> BC547B npn transistor -> PD0 - PD3
 // Emitter to 1Nx, Base with 220R resistor to PDx, Collector to Vcc
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-//							OTHER MATTERS
+// OTHER MATTERS
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 // My cat and white cat: wwww.kocurkolandia.mariuszbonifacy.pl
 // All calculations are based on official documentations (Microchip).
