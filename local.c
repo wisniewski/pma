@@ -1,30 +1,37 @@
 ﻿#include "local.h"
 
+const char txt_hours[] PROGMEM = "\001\x80\004\xff%S:%c%.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d";
+const char txt_minutes[] PROGMEM = "\001\x80\004\xff%S: %.2d%c%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d";
+const char txt_seconds[] PROGMEM = "\001\x80\004\xff%S: %.2d:%.2d%c%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d";
+const char txt_day_week[] PROGMEM = "\001\x80\004\xff%S: %.2d:%.2d:%.2d\001\xc0\004\xff%s%c%.2d.%.2d.%.4d";
+const char txt_day_month[] PROGMEM = "\001\x80\004\xff%S: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d%c%.2d.%.4d";
+const char txt_month[] PROGMEM = "\001\x80\004\xff%S: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d%c%.4d";
+const char txt_year[] PROGMEM = "\001\x80\004\xff%S: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d%c";
+const char txt_show_time[] PROGMEM = "\001\x80\004\xff%S: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d ";
+const char txt_volt_off[] PROGMEM = "\001\x80\004\377%S       \001\xc0\004\377%.2d.%.3d V (off)  ";
+const char txt_volt_on[] PROGMEM = "\001\x80\004\377%S       \001\xc0\004\377%.2d.%.3d V (on)   ";
+const char txt_therm_off[] PROGMEM = "\001\x80\004\377%S     \001\xc0\004\377%.2d.%.3d C (off)  ";
+const char txt_therm_on[] PROGMEM = "\001\x80\004\377%S     \001\xc0\004\377%.2d.%.3d C (on)   ";
+const char txt_dis_off[] PROGMEM = "\001\x80\004\377%S (cm)\001\xc0\004\377%.3d.%.3d (off)   ";
+const char txt_dis_on[] PROGMEM = "\001\x80\004\377%S (cm)\001\xc0\004\377%.3d.%.2d (on)     ";
+const char txt_step_slow_none[] PROGMEM = "\001\x80\004\377Slowdown: none  ";
+const char txt_step_slow[] PROGMEM = "\001\x80\004\377Slowdown: %ux    ";
+const char txt_step_cw[] PROGMEM = "\001\x80\004\377Direction: CW   ";
+const char txt_step_ccw[] PROGMEM = "\001\x80\004\377Direction: CCW  ";
+const char txt_step_ang_inf[] PROGMEM = "\001\x80\004\377Angle: infinity ";
+const char txt_step_ang_none[] PROGMEM = "\001\x80\004\377Angle: none     ";
+const char txt_step_ang[] PROGMEM = "\001\x80\004\377Angle: %.3u.%.3u  ";
+const char txt_step_off[] PROGMEM = "\001\x80\004\377%S: Off  ";
+const char txt_step_on[] PROGMEM = "\001\x80\004\377%S: On   ";
+
 void real_time_clock(char c) //Real Time Clock RTC
 {
 	char day_name[4];
 	static uint8_t send_time=0, thousand=2;
-	switch(date.day_week)
-	{
-		case 1: {strcpy(day_name,"Mon");} break;
-		case 2: {strcpy(day_name,"Tue");} break;
-		case 3: {strcpy(day_name,"Wed");} break;
-		case 4: {strcpy(day_name,"Thu");} break;
-		case 5: {strcpy(day_name,"Fri");} break;
-		case 6: {strcpy(day_name,"Sat");} break;
-		case 7: {strcpy(day_name,"Sun");} break;
-	}
-	
+	I2C_convert_day_name(day_name, date.day_week);
 	if(send_time)
 	{
-		I2C_write_value(REG_SECONDS, time.seconds);
-		I2C_write_value(REG_MINUTES, time.minutes);
-		I2C_write_value(REG_HOURS, time.hours);
-		
-		I2C_write_value(REG_DAY_OF_THE_WEEK, date.day_week);
-		I2C_write_value(REG_DAY_OF_THE_MONTH, date.day_month);
-		I2C_write_value(REG_MONTH, date.month);
-		I2C_write_value(REG_YEAR, date.year);
+		I2C_send_time_and_date();
 		send_time = 0;
 	}
 	
@@ -199,59 +206,50 @@ void real_time_clock(char c) //Real Time Clock RTC
 				{
 					case 1:
 					{
-						sprintf(lcd_buff,"\001\x80\004\xff%s:%c%.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d",txt2, 126, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000));
+						sprintf_P(lcd_buff,txt_hours,txt2, 126, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000));
 						lcd_buff_full=1;
 					}
 					break;
 					
 					case 2:
 					{
-						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d%c%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d",txt2, time.hours, 126, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000));
+						sprintf_P(lcd_buff,txt_minutes,txt2, time.hours, 126, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000));
 						lcd_buff_full=1;
 					}
 					break;
 					
 					case 3:
 					{
-						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d%c%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d",txt2, time.hours, time.minutes, 126, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000));
+						sprintf_P(lcd_buff,txt_seconds,txt2, time.hours, time.minutes, 126, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000));
 						lcd_buff_full=1;
 					}
 					break;
 					
 					case 4:
 					{
-						switch(date.day_week)
-						{
-							case 1: {strcpy(day_name,"Mon");} break;
-							case 2: {strcpy(day_name,"Tue");} break;
-							case 3: {strcpy(day_name,"Wed");} break;
-							case 4: {strcpy(day_name,"Thu");} break;
-							case 5: {strcpy(day_name,"Fri");} break;
-							case 6: {strcpy(day_name,"Sat");} break;
-							case 7: {strcpy(day_name,"Sun");} break;
-						}
-						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s%c%.2d.%.2d.%.4d",txt2, time.hours, time.minutes, time.seconds, day_name, 127, date.day_month, date.month, date.year+(thousand*1000));
+						I2C_convert_day_name(day_name, date.day_week);
+						sprintf_P(lcd_buff,txt_day_week,txt2, time.hours, time.minutes, time.seconds, day_name, 127, date.day_month, date.month, date.year+(thousand*1000));
 						lcd_buff_full=1;
 					}
 					break;
 					
 					case 5:
 					{
-						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d%c%.2d.%.4d",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, 127, date.month, date.year+(thousand*1000));
+						sprintf_P(lcd_buff,txt_day_month,txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, 127, date.month, date.year+(thousand*1000));
 						lcd_buff_full=1;
 					}
 					break;
 					
 					case 6:
 					{
-						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d%c%.4d",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, 127, date.year+(thousand*1000));
+						sprintf_P(lcd_buff,txt_month,txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, 127, date.year+(thousand*1000));
 						lcd_buff_full=1;
 					}
 					break;
 					
 					case 7:
 					{
-						sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d%c",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000), 127);
+						sprintf_P(lcd_buff,txt_year,txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000), 127);
 						lcd_buff_full=1;
 					}
 					break;
@@ -262,27 +260,8 @@ void real_time_clock(char c) //Real Time Clock RTC
 		
 		case 2:
 		{
-			time.seconds = I2C_get_value(REG_SECONDS, NACK);
-			time.minutes = I2C_get_value(REG_MINUTES, NACK);
-			time.hours = I2C_get_value(REG_HOURS, NACK);
-			
-			date.day_week = I2C_get_value(REG_DAY_OF_THE_WEEK, NACK);
-			date.day_month = I2C_get_value(REG_DAY_OF_THE_MONTH, NACK);
-			date.month = I2C_get_value(REG_MONTH, NACK);
-			date.year = I2C_get_value(REG_YEAR, ACK);
-			
-			switch(date.day_week)
-			{
-				case 1: {strcpy(day_name,"Mon");} break;
-				case 2: {strcpy(day_name,"Tue");} break;
-				case 3: {strcpy(day_name,"Wed");} break;
-				case 4: {strcpy(day_name,"Thu");} break;
-				case 5: {strcpy(day_name,"Fri");} break;
-				case 6: {strcpy(day_name,"Sat");} break;
-				case 7: {strcpy(day_name,"Sun");} break;
-			}
-			
-			sprintf(lcd_buff,"\001\x80\004\xff%s: %.2d:%.2d:%.2d\001\xc0\004\xff%s %.2d.%.2d.%.4d ",txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000));
+			I2C_get_time_and_date();
+			sprintf_P(lcd_buff,txt_show_time,txt2, time.hours, time.minutes, time.seconds, day_name, date.day_month, date.month, date.year+(thousand*1000));
 			lcd_buff_full=1;
 		}
 		break;
@@ -352,12 +331,11 @@ void voltmeter(char c) //voltmeter
 			}
 			float temp;
 			int integer, fractional;
-			const char on[]="on", off[]="off";
 			if(adc_toggle_volt==0)
 			{
 				integer = 0;
 				fractional = 0;
-				sprintf(lcd_buff,"\001\x80\004\377%s       \001\xc0\004\377%.2d.%.3d V (%s)  ",txt4,integer, fractional, off);
+				sprintf_P(lcd_buff,txt_volt_off,txt4,integer, fractional);
 				lcd_buff_full=1;
 			}
 			else
@@ -366,7 +344,7 @@ void voltmeter(char c) //voltmeter
 				integer = (int) temp; //conversion from float to int
 				temp = (temp - integer) * 1000.0f;
 				fractional = (int) temp;
-				sprintf(lcd_buff,"\001\x80\004\377%s       \001\xc0\004\377%.2d.%.3d V (%s)   ",txt4,integer, fractional, on);
+				sprintf_P(lcd_buff,txt_volt_on,txt4,integer, fractional);
 				lcd_buff_full=1;
 			}
 			
@@ -435,22 +413,20 @@ void thermometer(char c) //thermometer
 			A (slope) = 0,25 +/- 6,52646234769871e-18 */
 			float temp;
 			int integer, fractional;
-			const char on[]="on", off[]="off";
 			if(adc_toggle_thermo==0)
 			{
 				integer=0;
 				fractional=0;
-				sprintf(lcd_buff,"\001\x80\004\377%s     \001\xc0\004\377%.2d.%.3d C (%s)  ",txt5, integer, fractional, off);
+				sprintf_P(lcd_buff,txt_therm_off,txt5, integer, fractional);
 				lcd_buff_full=1;
 			}
 			else
 			{
-				
 				temp = (0.25f*measurement)-20.5f;
 				integer = (int) temp; //conversion from float to uint8_t
 				temp = (temp - integer) * 100.0f;
 				fractional = (int) temp;
-				sprintf(lcd_buff,"\001\x80\004\377%s     \001\xc0\004\377%.2d.%.3d C (%s)   ",txt5, integer, fractional, on);
+				sprintf_P(lcd_buff,txt_therm_on,txt5, integer, fractional);
 				lcd_buff_full=1;
 			}
 			
@@ -505,12 +481,11 @@ void distance_sensor(char c) //distance
 			}
 			float temp;
 			int integer, fractional;
-			const char on[]="on", off[]="off";
 			if(toggle_distance==0)
 			{
 				integer=0;
 				fractional=0;
-				sprintf(lcd_buff,"\001\x80\004\377%s (cm)\001\xc0\004\377%.3d.%.3d (%s)   ",txt8, integer, fractional, off);
+				sprintf_P(lcd_buff,txt_dis_off,txt8, integer, fractional);
 				lcd_buff_full=1;
 			}
 			else
@@ -532,7 +507,7 @@ void distance_sensor(char c) //distance
 				integer = (int) temp; //conversion from float to int
 				temp = (temp - integer) * 100.0f;
 				fractional = (int) temp;
-				sprintf(lcd_buff,"\001\x80\004\377%s (cm)\001\xc0\004\377%.3d.%.2d (%s)     ",txt8, integer, fractional, on);
+				sprintf_P(lcd_buff,txt_dis_on,txt8, integer, fractional);
 				lcd_buff_full=1;
 				
 				distance=0; //for new measurement
@@ -641,9 +616,9 @@ void stepper_motor(char c) //Stepper motor
 					case 0: //slowdown
 					{
 						if(motor.slowdown==0)
-						sprintf(lcd_buff,"\001\x80\004\377Slowdown: none  ");
+						sprintf_P(lcd_buff, txt_step_slow_none);
 						else
-						sprintf(lcd_buff,"\001\x80\004\377Slowdown: %ux    ",motor.slowdown);
+						sprintf_P(lcd_buff, txt_step_slow, motor.slowdown);
 						lcd_buff_full=1;
 					}
 					break;
@@ -651,9 +626,9 @@ void stepper_motor(char c) //Stepper motor
 					case 1: //direction
 					{
 						if(motor.direction)
-						sprintf(lcd_buff,"\001\x80\004\377Direction: CW   ");
+						sprintf_P(lcd_buff,txt_step_cw);
 						else
-						sprintf(lcd_buff,"\001\x80\004\377Direction: CCW  ");
+						sprintf_P(lcd_buff,txt_step_ccw);
 						lcd_buff_full=1;
 					}
 					break;
@@ -676,11 +651,11 @@ void stepper_motor(char c) //Stepper motor
 						fractional = (int) angle;
 						
 						if(motor.steps==4160)
-						sprintf(lcd_buff,"\001\x80\004\377Angle: infinity ");
+						sprintf_P(lcd_buff,txt_step_ang_inf);
 						else if(motor.steps==0)
-						sprintf(lcd_buff,"\001\x80\004\377Angle: none     ");
+						sprintf_P(lcd_buff,txt_step_ang_none);
 						else
-						sprintf(lcd_buff,"\001\x80\004\377Angle: %.3u.%.3u  ",integer,fractional);
+						sprintf_P(lcd_buff,txt_step_ang,integer,fractional);
 						lcd_buff_full=1;
 						
 						motor.temporary_steps = motor.steps;
@@ -697,7 +672,7 @@ void stepper_motor(char c) //Stepper motor
 			if(motor.temporary_steps==0)
 			{
 				PORTD = 0x00;
-				sprintf(lcd_buff,"\001\x80\004\377%s: Off  ",txt7);
+				sprintf_P(lcd_buff,txt_step_off,txt7);
 				lcd_buff_full=1;
 			}
 			else
@@ -724,7 +699,7 @@ void stepper_motor(char c) //Stepper motor
 					else
 					i=(i+7)%8;
 					
-					sprintf(lcd_buff,"\001\x80\004\377%s: On   ",txt7);
+					sprintf_P(lcd_buff,txt_step_on,txt7);
 					lcd_buff_full=1;
 				}
 				else if(motor.temporary_slowdown>0)

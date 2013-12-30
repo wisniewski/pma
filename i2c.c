@@ -141,5 +141,35 @@ void I2C_get_time_and_date(void)
 	date.year = I2C_get_value(REG_YEAR, ACK);
 }
 
+//-------------------------------------
+// Get time & date (init main)
+//-------------------------------------
+void I2C_send_time_and_date(void)
+{
+	I2C_write_value(REG_SECONDS, time.seconds);
+	I2C_write_value(REG_MINUTES, time.minutes);
+	I2C_write_value(REG_HOURS, time.hours);
+	I2C_write_value(REG_DAY_OF_THE_WEEK, date.day_week);
+	I2C_write_value(REG_DAY_OF_THE_MONTH, date.day_month);
+	I2C_write_value(REG_MONTH, date.month);
+	I2C_write_value(REG_YEAR, date.year);
+}
+
+//-------------------------------------
+// Convert number to day name
+//-------------------------------------
+void I2C_convert_day_name(char *p, uint8_t day)
+{
+	switch(day)
+	{
+		case 1: {strcpy(p,"Mon");} break;
+		case 2: {strcpy(p,"Tue");} break;
+		case 3: {strcpy(p,"Wed");} break;
+		case 4: {strcpy(p,"Thu");} break;
+		case 5: {strcpy(p,"Fri");} break;
+		case 6: {strcpy(p,"Sat");} break;
+		case 7: {strcpy(p,"Sun");} break;
+	}
+}
 
 

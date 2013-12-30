@@ -3,6 +3,7 @@
 
 #include<avr/io.h>
 #include <util/twi.h>
+#include <string.h>
 
 typedef struct rtc_time
 {
@@ -51,7 +52,9 @@ uint8_t I2C_receive_data(uint8_t ack);
 
 void I2C_write_value(uint8_t register, uint8_t value);
 uint8_t I2C_get_value(uint8_t address, uint8_t nack_ack);
+void I2C_send_time_and_date(void);
 void I2C_get_time_and_date(void);
+void I2C_convert_day_name(char *p, uint8_t day);
 
 extern uint8_t address;
 

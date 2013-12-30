@@ -11,6 +11,31 @@
 #include "i2c.h"
 #include <string.h>
 
+extern const char txt_hours[] PROGMEM;
+extern const char txt_hours[] PROGMEM;
+extern const char txt_minutes[] PROGMEM;
+extern const char txt_seconds[] PROGMEM;
+extern const char txt_day_week[] PROGMEM;
+extern const char txt_day_month[] PROGMEM;
+extern const char txt_month[] PROGMEM;
+extern const char txt_year[] PROGMEM;
+extern const char txt_show_time[] PROGMEM;
+extern const char txt_volt_off[] PROGMEM;
+extern const char txt_volt_on[] PROGMEM;
+extern const char txt_therm_off[] PROGMEM;
+extern const char txt_therm_on[] PROGMEM;
+extern const char txt_dis_off[] PROGMEM;
+extern const char txt_dis_on[] PROGMEM;
+extern const char txt_step_slow_none[] PROGMEM;
+extern const char txt_step_slow[] PROGMEM;
+extern const char txt_step_cw[] PROGMEM;
+extern const char txt_step_ccw[] PROGMEM;
+extern const char txt_step_ang_inf[] PROGMEM;
+extern const char txt_step_ang_none[] PROGMEM;
+extern const char txt_step_ang[] PROGMEM;
+extern const char txt_step_off[] PROGMEM;
+extern const char txt_step_on[] PROGMEM;
+
 extern uint8_t volatile keys;
 extern uint8_t volatile local;
 extern uint8_t volatile lcd_buff_full;

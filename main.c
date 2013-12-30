@@ -77,35 +77,36 @@ struct menu
 	struct menu *right;
 	struct menu *up;
 	struct menu *down;
-	const char *str; //string
+	const char* str; //string
 	void (*function)(char); //pointer to function
 	uint16_t period; //how fast handle function(2)
-	char arrow;
 };
 
 struct menu M1, M2, M3, M11, M21, M22, M23, M31;
 struct menu *current_menu;
 
 //menu 1 - real time clock, stopwatch, count down
-const char txt1[] = "  RTC and Date  ";
-const char txt2[] = "RTC";
+const char txt1[] PROGMEM = "  RTC and Date  ";
+const char txt2[] PROGMEM = "RTC";
 //menu 2 - voltmeter, thermometer
-const char txt3[] = "  Voltage/Temp  \001\xc0\004\377    Distance    ";
-const char txt4[] = "Voltmeter";
-const char txt5[] = "Thermometer";
+const char txt3[] PROGMEM = "  Voltage/Temp  \001\xc0\004\377    Distance    ";
+const char txt4[] PROGMEM = "Voltmeter";
+const char txt5[] PROGMEM = "Thermometer";
 //menu 3 - stepper motor
-const char txt6[] = "    Stepper    \001\xc0\004\377     Motor     ";
-const char txt7[] = "SM Config";
-const char txt8[] = "Distance";
+const char txt6[] PROGMEM = "    Stepper    \001\xc0\004\377     Motor     ";
+const char txt7[] PROGMEM = "SM Config";
+const char txt8[] PROGMEM = "Distance";
 
-struct menu M1 = {&M3, &M2, NULL, &M11, txt1, NULL, 0, 126};
-struct menu M11 = {NULL, NULL, &M1, NULL, txt2, &real_time_clock, 7500, 126};
-struct menu M2 = {&M1, &M3, NULL, &M21, txt3, NULL, 0, 126};
-struct menu M21 = {&M23, &M22, &M2, NULL, txt4, &voltmeter, 1000, 127};
-struct menu M22 = {&M21, &M23, &M2, NULL, txt5, &thermometer, 1000, 127};
-struct menu M23 = {&M22, &M21, &M2, NULL, txt8, &distance_sensor, 1000, 127};	
-struct menu M3 = {&M2, &M1, NULL, &M31, txt6, NULL, 0, 126};
-struct menu M31 = {NULL, NULL, &M3, NULL, txt7, &stepper_motor, 10, 127};
+const char txt_menu[] PROGMEM = "\001\x01\004\xff%S";
+
+struct menu M1 = {&M3, &M2, NULL, &M11, txt1, NULL, 0};
+struct menu M11 = {NULL, NULL, &M1, NULL, txt2, &real_time_clock, 7500};
+struct menu M2 = {&M1, &M3, NULL, &M21, txt3, NULL, 0};
+struct menu M21 = {&M23, &M22, &M2, NULL, txt4, &voltmeter, 1000};
+struct menu M22 = {&M21, &M23, &M2, NULL, txt5, &thermometer, 1000};
+struct menu M23 = {&M22, &M21, &M2, NULL, txt8, &distance_sensor, 1000};	
+struct menu M3 = {&M2, &M1, NULL, &M31, txt6, NULL, 0};
+struct menu M31 = {NULL, NULL, &M3, NULL, txt7, &stepper_motor, 10};
 
 int main (void)
 {
@@ -149,7 +150,7 @@ int main (void)
 					if((current_menu -> up) != NULL)
 					{
 						current_menu = current_menu -> up; //show menu and move on
-						sprintf(lcd_buff, "\001\x01\004\xff%s",current_menu->str);
+						sprintf_P(lcd_buff, txt_menu,current_menu->str);
 						lcd_buff_full = 1;
 					}
 					break;
@@ -158,7 +159,7 @@ int main (void)
 					if((current_menu -> left) != NULL)
 					{
 						current_menu = current_menu -> left;
-						sprintf(lcd_buff, "\001\x01\004\xff%s",current_menu->str);
+						sprintf_P(lcd_buff, txt_menu,current_menu->str);
 						lcd_buff_full = 1;
 					}
 					break;
@@ -167,7 +168,7 @@ int main (void)
 					if((current_menu -> right) != NULL)
 					{
 						current_menu = current_menu -> right;
-						sprintf(lcd_buff, "\001\x01\004\xff%s",current_menu->str);
+						sprintf_P(lcd_buff, txt_menu,current_menu->str);
 						lcd_buff_full = 1;
 					}
 					break;
@@ -176,14 +177,14 @@ int main (void)
 					if((current_menu -> down) != NULL)
 					{
 						current_menu = current_menu -> down;
-						sprintf(lcd_buff, "\001\x01\004\xff%s",current_menu->str);
+						sprintf_P(lcd_buff, txt_menu,current_menu->str);
 						lcd_buff_full = 1;
 					}
 					else if((current_menu -> function) != NULL)
 					local = 1;
 					break;
 				}
-				sprintf(lcd_buff,"\001\x01\004\377%s",current_menu->str); //let's show our current menu
+				sprintf_P(lcd_buff,txt_menu,current_menu->str); //let's show our current menu
 				lcd_buff_full = 1;
 				keys = 0;
 			}
