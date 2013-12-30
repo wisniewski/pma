@@ -46,14 +46,14 @@ extern unsigned int volatile distance;
 
 extern const uint8_t moves[8];
 
-extern const char txt1[];
-extern const char txt2[];
-extern const char txt3[];
-extern const char txt4[];
-extern const char txt5[];
-extern const char txt6[];
-extern const char txt7[];
-extern const char txt8[];
+extern const char txt1[] PROGMEM;
+extern const char txt2[] PROGMEM;
+extern const char txt3[] PROGMEM;
+extern const char txt4[] PROGMEM;
+extern const char txt5[] PROGMEM;
+extern const char txt6[] PROGMEM;
+extern const char txt7[] PROGMEM;
+extern const char txt8[] PROGMEM;
 
 //local functions
 void real_time_clock(char c);

@@ -59,6 +59,7 @@
 #include "lcd.h"
 #include "buttons.h"
 #include "i2c.h"
+#include "strings.h"
 
 /* global variables (interrupts etc.) */
 uint8_t volatile keys, local, lcd_buff_full;
@@ -66,10 +67,7 @@ char *lcd_buff; //pointer to buffer
 volatile char run_function=0, lcd_start=0; //can we run function(2)?
 uint8_t first_time[3]={0};
 unsigned int volatile measurement = 0, distance = 0; //adc + HC-SR04 distance sensor
-
 const uint8_t PROGMEM moves[8]={1, 3, 2, 6, 4, 12, 8, 9}; //stepper motor
-// -- wait \004\377 -- command \001\x28 --
-const char lcd_init[] PROGMEM = "\004\377\001\x28\004\377\001\x28\004\377\001\x28\004\377\001\x0c\004\377\001\x06\004\377\001\x01\004\377";
 
 struct menu
 {
@@ -84,20 +82,6 @@ struct menu
 
 struct menu M1, M2, M3, M11, M21, M22, M23, M31;
 struct menu *current_menu;
-
-//menu 1 - real time clock, stopwatch, count down
-const char txt1[] PROGMEM = "  RTC and Date  ";
-const char txt2[] PROGMEM = "RTC";
-//menu 2 - voltmeter, thermometer
-const char txt3[] PROGMEM = "  Voltage/Temp  \001\xc0\004\377    Distance    ";
-const char txt4[] PROGMEM = "Voltmeter";
-const char txt5[] PROGMEM = "Thermometer";
-//menu 3 - stepper motor
-const char txt6[] PROGMEM = "    Stepper    \001\xc0\004\377     Motor     ";
-const char txt7[] PROGMEM = "SM Config";
-const char txt8[] PROGMEM = "Distance";
-
-const char txt_menu[] PROGMEM = "\001\x01\004\xff%S";
 
 struct menu M1 = {&M3, &M2, NULL, &M11, txt1, NULL, 0};
 struct menu M11 = {NULL, NULL, &M1, NULL, txt2, &real_time_clock, 7500};
